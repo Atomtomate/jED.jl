@@ -1,0 +1,25 @@
+[Model]
+beta = 10.0
+mu   = 1.5
+U    = 3.0
+# U1,U2, J, ...  # These values need only to be given, when used in definitions of the interaction matrix. Names are arbitrary
+t1 = 0.302313674983807
+t2 = 0.154603780668397
+t3 = 0.302313674983807
+t4 = 0.154603780668397
+
+HU = [U V 0 0 0; 
+      V 0 0 0 0;
+      0 0 0 0 0;
+      0 0 0 0 0;
+      0 0 0 0 0]
+HJ = [0 0 0 0 0;
+      0 0 0 0 0;
+      0 0 0 0 0;
+      0 0 0 0 0;
+      0 0 0 0 0]
+Ht = [0 t1 t2 t3 t4;
+      t1 0  0  0  0;
+      t2 0  0  0  0;
+      t3 0  0  0  0;
+      t4 0  0  0  0]
