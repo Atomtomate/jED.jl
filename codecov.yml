@@ -1,0 +1,3 @@
+ignore:
+  - "src/IO.jl"
+  - "src/graveyard.jl"
