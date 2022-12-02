@@ -20,7 +20,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/Atomtomate/jED.jl.git",
-    julia="1.8",
-    osname = "ubuntu"
+    repo="github.com/Atomtomate/jED.jl.git"
 )
