@@ -29,7 +29,7 @@ Fields
 struct Eigenspace{T}
     evals::Vector{Float64}
     evecs::Vector{Vector{T}}
-    blocklist::Vector
+    blocklist::Vector{Blockinfo}
     E0::Float64
 end
 
@@ -47,7 +47,7 @@ function Eigenspace(model::Model, basis::Basis)
     for (start, len) in basis.blocklist
         slice = start:(start+len-1)
         @timeit to "gen H" Hi = calc_Hamiltonian(model, basis.states[slice])
-        @timeit to "diag" tmp = eigen(Hi)
+        @timeit to "diag" tmp = eigen(Hi, sortby=nothing)
         evals[slice] .= tmp.values
         for i in 1:length(tmp.values)
             evecs[start+i-1] = tmp.vectors[:,i]
@@ -84,7 +84,7 @@ function calc_Hamiltonian(model::Model, states::Vector{Fockstate{NSites}}) where
     return T === ComplexF64 ? Hermitian(H_int, :U) : Symmetric(H_int, :U)
 end
 
-calc_Hamiltonian(model::Model, basis::Basis) = calc_Hamiltonian(model, states.states) 
+calc_Hamiltonian(model::Model, basis::Basis) = calc_Hamiltonian(model, basis.states) 
 
 
 

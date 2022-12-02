@@ -5,12 +5,15 @@
 # ----------------------------------------- Description ---------------------------------------------- #
 #   Type definition and basic operations on Fock states.                                               #
 # -------------------------------------------- TODO -------------------------------------------------- #
+#   store C,CDag signs in Basis
 #   _generate_blocks refactor                                                                          #
 # ==================================================================================================== #
 
 
 const Fockstate = SVector{Length, Bool} where Length
+const Blockinfo = NTuple{4,Int}
 
+# =============================================== Basis ==============================================
 """
     Basis
 
@@ -22,16 +25,18 @@ A list of states should be generated using `States(NSites)` with NSites being th
 
 Fields
 -------------
-- **`NFlavors`**  : Integer, number of flavors (TODOhardcoded to `2` for now!)
+- **`NFlavors`**  : Integer, number of flavors (TODO: hardcoded to `2` for now. later: orbitals*2?!)
 - **`NSites`**    : Integer, number of sites
 - **`states`**    : Vector{State}, list of Fock states. The are sorted according to good quantum numbers. `blocklist` contains start and size of blocks.
-- **`blocklist`** : Vector{Tuple{Int,Int}}, Vector of tuples. Each entry encodes a block with the first element being the start and the second the column size of the block 
+- **`blocklist`** : Vector{NTuple{4,Int}}, Vector of 4-tuples. Each entry encodes a block in the following form: 1. element is the start index of the block, 2. element is the column size of the block, 3. element is the electron number (see [`N_el`](@ref N_el)), 4. element is the spin (see [`S`](@ref S)) 
 """
 struct Basis{Length}
     NFlavors::Int
     NSites::Int
     states::Vector{Fockstate{Length}}
-    blocklist::Vector{Tuple{Int,Int}}
+    # CSigns::Vector{Int}
+    # CDagSigns::Vector{Int}
+    blocklist::Vector{Blockinfo}
 end
 
 function Basis(NSites::Int; NFlavors::Int = 2)
@@ -111,7 +116,7 @@ Sort state list and generate list of blocks.
 function _generate_blocks!(states::Vector{Fockstate{Length}}) where Length
     sort_f(x::Fockstate) = N_el(x)^3 + S(x)
     sort!(states, by = sort_f)
-    blocks = Vector{Tuple{Int, Int}}(undef, 0)
+    blocks = Vector{Blockinfo}(undef, 0)
 
     last_N::Int = N_el(states[1])
     last_S::Int = S(states[1])
@@ -122,7 +127,7 @@ function _generate_blocks!(states::Vector{Fockstate{Length}}) where Length
         Ni = N_el(states[i])
         Si = S(states[i])
         if Ni != last_N || Si != last_S
-            push!(blocks, (current_block_start, current_block_size))
+            push!(blocks, (current_block_start, current_block_size, Ni, Si))
             last_N = Ni
             last_S = Si
             current_block_size = 0
@@ -130,6 +135,10 @@ function _generate_blocks!(states::Vector{Fockstate{Length}}) where Length
         end
         current_block_size += 1
     end
-    push!(blocks, (current_block_start, current_block_size))
+    Ni = N_el(states[end])
+    Si = S(states[end])
+    push!(blocks, (current_block_start, current_block_size, Ni, Si))
     return blocks
 end
+
+_block_slice(bi::Blockinfo) = bi[1]:bi[1]+bi[2]-1

@@ -32,6 +32,7 @@ operator_ni(state::Fockstate, i::Int)::OperatorResult = (state[i], state)
 
 
 # ============================================== Overlaps ============================================
+# -------------------------------------------- Fock States -------------------------------------------
 
 """
     overlap(bra::Fockstate, ket::Fockstate)
@@ -90,3 +91,19 @@ Returns: True/False (converts to 1/0)
 function overlap_ni_nj(bra::Fockstate, ket::Fockstate, i::Int, j::Int)::Bool
     return ket[i] & ket[j] & overlap(bra,ket)
 end
+
+
+
+# ------------------------------------------- Eigen States -------------------------------------------
+
+"""
+    overlap_2(bra::Vector, ket::Vector)
+
+Computes |⟨`bra`|`ket`⟩|² for `Float64` or `ComplexF64` type vectors.
+"""
+function overlap_2(bra::Vector{ComplexF64}, ket::Vector{ComplexF64})::Float64
+    c = dot(bra, ket)
+    return Float64(conj(c) * c)
+end
+
+overlap_2(bra::Vector{Float64}, ket::Vector{Float64})::Float64 = dot(bra,ket)^2

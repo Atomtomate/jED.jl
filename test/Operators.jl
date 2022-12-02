@@ -57,3 +57,12 @@ end
     @test jED.overlap_ni_nj(t1,t2, 1,5) == 0
     @test jED.overlap_ni_nj(t1,t2, 7,5) == 0
 end
+
+@testset "overlap_2" begin
+    a = randn(3)
+    b = randn(3)
+    ac = randn(ComplexF64, 3)
+    bc = randn(ComplexF64, 3)
+    @test jED.overlap_2(a,b) ≈ dot(a,b)^2
+    @test jED.overlap_2(ac,bc) ≈ conj(dot(ac,bc)) * dot(ac,bc)
+end

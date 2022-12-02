@@ -23,3 +23,7 @@ end
         @test length(s.blocklist) == length(unique(zz))
     end
 end
+
+@testset "Internals" begin
+    @test all(jED._block_slice((4,6,1,1)) .== 4:9)
+end

@@ -1,5 +1,6 @@
 using jED
 using Test
+using LinearAlgebra
 
 
 basis = jED.Basis(3)
@@ -33,6 +34,11 @@ end
     include("Observables.jl")
 end
 
+@testset "Greens Functions" begin
+    include("GreensFunctions.jl")
+end
+
 @testset "jED.jl" begin
+    include("full_N2_run.jl")
 
 end

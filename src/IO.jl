@@ -11,9 +11,8 @@ import Base: show
 # ========================= Custom type overloads =========================
 function show(io::IO, ::MIME"text/plain", f::Fockstate{Length}) where Length
     compact = get(io, :compact, false)
-    bb = strip(bitstring(BitVector(f)), '0')
-    bb = rpad(bb, Length, "0")
-    N = Int(Length/2)
+    bb = rpad(bitstring(BitVector(f)), Length, "0")
+    N = floor(Int,Length/2)
     for i in 1:N
             du = parse(Int, bb[i])
             dd = parse(Int, bb[N + i])
@@ -22,6 +21,15 @@ function show(io::IO, ::MIME"text/plain", f::Fockstate{Length}) where Length
     end
 end
 # ======================= Auxilliary Function =======================
+
+function show_matrix_block(H::AbstractMatrix, basis::Basis, iBlock::Int)
+    start,size,Ni,Si = basis.blocklist[iBlock]
+    slice = start:start+size-1
+
+    println("(Block for N=$Ni, S=$Si): ")
+    show(stdout, "text/plain", H[slice, slice])
+    println("\n===============================")
+end
 
 # ========================= Fortran Functions =========================
 # """

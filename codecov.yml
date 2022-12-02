@@ -1,3 +1,4 @@
 ignore:
   - "src/IO.jl"
   - "src/graveyard.jl"
+  - "src/GreensFunctions.jl"
