@@ -1,6 +1,8 @@
 @testset "auxilliary functions" begin
     s = jED.SVector{8}(Bool[1,0,1,0,1,0,0,0])
     @test jED.N_el(s) == 3
+    @test jED.N_up(s) == 2
+    @test jED.N_do(s) == 1
     @test jED.S(s) == 1
     @test jED.C_sign(s,3) == -1
     @test jED.C_sign(s,2) == 0
@@ -26,4 +28,8 @@ end
 
 @testset "Internals" begin
     @test all(jED._block_slice((4,6,1,1)) .== 4:9)
+end
+
+@testset "cdag overlap" begin
+    @test all(jED._find_cdag_overlap_blocks(basis.blocklist) .== [3, 5, 6, 8, 9, 10, 11, 12, 13, -1, 14, 15, -1, 16, -1, -1])
 end

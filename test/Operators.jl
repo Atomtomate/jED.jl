@@ -8,6 +8,15 @@
     @test all(r2[2] .== t1)
 end
 
+@testset "operator c/cdag" begin
+    t1 = jED.SVector{8}(Bool[1,1,1,1,0,1,0,1])
+    t2 = jED.SVector{8}(Bool[0,1,1,1,0,1,0,1])
+    @test jED.create(t1, 1) === nothing
+    @test all(jED.ann(t1, 1) .== t2)
+    @test all(jED.create(t2, 1) .== t1)
+    @test jED.ann(t2, 1) === nothing
+end
+
 @testset "overlap" begin
     t1 = jED.SVector{8}(Bool[1,1,1,1,0,1,0,1])
     t2 = jED.SVector{8}(Bool[1,1,0,1,1,1,0,1])

@@ -20,6 +20,19 @@ function show(io::IO, ::MIME"text/plain", f::Fockstate{Length}) where Length
             (i < N) && print(io, "-")
     end
 end
+
+function show(io::IO, ::MIME"text/plain", b::Basis{Length}) where Length
+    compact = get(io, :compact, false)
+    for (bi,el) in enumerate(b.blocklist)
+        block_str = " === Block $(lpad(bi,3))    [N = $(lpad(el[3],2)), S = $(lpad(el[4],3))] ==="
+        println(block_str)
+        for i in _block_slice(el)
+            print(io, "   |          ")
+            show(io,"text/plain", b.states[i])
+            println(io, "")
+        end
+    end
+end
 # ======================= Auxilliary Function =======================
 
 function show_matrix_block(H::AbstractMatrix, basis::Basis, iBlock::Int)

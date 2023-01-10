@@ -29,13 +29,12 @@ Fields
 - **`NSites`**    : Integer, number of sites
 - **`states`**    : Vector{State}, list of Fock states. The are sorted according to good quantum numbers. `blocklist` contains start and size of blocks.
 - **`blocklist`** : Vector{NTuple{4,Int}}, Vector of 4-tuples. Each entry encodes a block in the following form: 1. element is the start index of the block, 2. element is the column size of the block, 3. element is the electron number (see [`N_el`](@ref N_el)), 4. element is the spin (see [`S`](@ref S)) 
+- **`cdag_ov`**   : Vector{Tuple{UnitRange{Int},UnitRange{Int}}}, Slices of states, that contribute to an overlap with one creation operator. Needed for performance reasons in computation of Lehmann representation (see also (@ref _find_cdag_overlap_blocks)[`_find_cdag_overlap_blocks`])).
 """
 struct Basis{Length}
     NFlavors::Int
     NSites::Int
     states::Vector{Fockstate{Length}}
-    # CSigns::Vector{Int}
-    # CDagSigns::Vector{Int}
     blocklist::Vector{Blockinfo}
 end
 
@@ -67,12 +66,26 @@ Total electron number of state.
 N_el(s::Fockstate)::Int = sum(s)
 
 """
+    N_up(s::Fockstate{NSites})
+
+Number of up electrons, ``N_\\uparrow`` in state `s`.
+"""
+N_up(s::Fockstate{NSites}) where NSites = sum(s[1:Int(NSites/2)])
+
+"""
+    N_do(s::Fockstate{NSites})
+
+Number of down electrons, ``N_\\downarrow`` in state `s`.
+"""
+N_do(s::Fockstate{NSites}) where NSites = sum(s[Int(NSites/2)+1:end])
+
+"""
     S(s::AbstractVector)::Int
 
 Total spin of state.
 #TODO: only implemented for flavor=2
 """
-S(s::Fockstate{NSites}) where NSites = sum(s[1:Int(NSites/2)]) - sum(s[Int(NSites/2)+1:end])
+S(s::Fockstate{NSites}) where NSites = N_up(s) - N_do(s)
 
 """
     C_sign(state,i)
@@ -127,7 +140,7 @@ function _generate_blocks!(states::Vector{Fockstate{Length}}) where Length
         Ni = N_el(states[i])
         Si = S(states[i])
         if Ni != last_N || Si != last_S
-            push!(blocks, (current_block_start, current_block_size, Ni, Si))
+            push!(blocks, (current_block_start, current_block_size, last_N, last_S))
             last_N = Ni
             last_S = Si
             current_block_size = 0
@@ -141,4 +154,9 @@ function _generate_blocks!(states::Vector{Fockstate{Length}}) where Length
     return blocks
 end
 
+"""
+    _block_slice(bi::Blockinfo)
+
+Slice of continuous vector for given block `bi`.
+"""
 _block_slice(bi::Blockinfo) = bi[1]:bi[1]+bi[2]-1

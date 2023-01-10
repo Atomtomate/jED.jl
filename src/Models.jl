@@ -38,6 +38,7 @@ julia> μ  = 0.5
 julia> model = AIM(ϵₖ, Vₖ, μ, U)
 AIM{3, Float64}([
 -0.5 1.0 1.0; 1.0 0.5 0.0; 1.0 0.0 -5.0], [1.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 0.0], [0.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 0.0])
+```
 """
 struct AIM{NSites, T} <: Model
     tMatrix::SMatrix{NSites,NSites,T}

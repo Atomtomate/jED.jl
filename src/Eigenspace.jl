@@ -29,7 +29,6 @@ Fields
 struct Eigenspace{T}
     evals::Vector{Float64}
     evecs::Vector{Vector{T}}
-    blocklist::Vector{Blockinfo}
     E0::Float64
 end
 
@@ -42,23 +41,23 @@ function Eigenspace(model::Model, basis::Basis)
     EVecType = typeof(model).parameters[2]
     evals = Vector{Float64}(undef, length(basis.states))
     evecs = Vector{Vector{EVecType}}(undef, length(basis.states))
-    global to
+
     print("Generating Eigenspace:   0.0% done.")
-    for (start, len) in basis.blocklist
-        slice = start:(start+len-1)
-        @timeit to "gen H" Hi = calc_Hamiltonian(model, basis.states[slice])
-        @timeit to "diag" tmp = eigen(Hi, sortby=nothing)
+    for el in basis.blocklist
+        slice = _block_slice(el)
+        Hi = calc_Hamiltonian(model, basis.states[slice])
+        tmp = eigen(Hi, sortby=nothing)
         evals[slice] .= tmp.values
         for i in 1:length(tmp.values)
-            evecs[start+i-1] = tmp.vectors[:,i]
+            evecs[first(slice)+i-1] = tmp.vectors[:,i]
         end
-        done = lpad(round(100*(start+len)/length(basis.states), digits=1), 5, " ")
+        done = lpad(round(100*(el[1]+el[2])/length(basis.states), digits=1), 5, " ")
         print("\rGenerating Eigenspace: $(done)% done.")
     end
     println("\rEigenspace generated!                  ")
     E0 = minimum(evals)
     
-    return Eigenspace{EVecType}(evals, evecs, basis.blocklist, E0)
+    return Eigenspace{EVecType}(evals, evecs, E0)
 end
 
 # ============================================ Hamiltonian ===========================================
@@ -137,7 +136,3 @@ function _H_nn(bra::Fockstate, ket::Fockstate, UMatrix::SMatrix)
     end
     return res
 end
-
-
-
-
