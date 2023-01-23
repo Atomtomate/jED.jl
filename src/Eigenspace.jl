@@ -23,7 +23,6 @@ Fields
 -------------
 - **`evals`**     : Eigenvalues
 - **`evecs`**     : Eigenvectors
-- **`blocklist`** : List of start indices and lengths of blocks.
 - **`E0`**        : smallest Eigenvalue
 """
 struct Eigenspace{T}
@@ -58,6 +57,34 @@ function Eigenspace(model::Model, basis::Basis)
     E0 = minimum(evals)
     
     return Eigenspace{EVecType}(evals, evecs, E0)
+end
+
+function Eigenspace_L(model::Model, basis::Basis)
+
+    EVecType = typeof(model).parameters[2]
+    evals = Inf .* ones(length(basis.states))
+    evecs = Vector{Vector{EVecType}}(undef, length(basis.states))
+    issymmetric = eltype(model.tMatrix) === Float64 ? true : false
+
+    print("Generating Eigenspace:   0.0% done.")
+    for el in basis.blocklist
+        slice = _block_slice(el)
+        Hi = calc_Hamiltonian(model, basis.states[slice])
+        krylov_dim = size(Hi,1) > 200 ? floor(Int,size(Hi,1)/10) : size(Hi,1)
+        # values, vectors, conv = eigsolve(Hi, ishermitian=true)
+        values,vectors,conv =  eigsolve(Hi, rand(Float64, size(Hi, 1)), krylov_dim, :SR, krylovdim=krylov_dim, ishermitian=true, issymmetric=issymmetric)
+        nv = conv.converged
+        evals[first(slice):first(slice)+nv-1] .= values[1:nv]
+        for i in 1:nv
+            evecs[first(slice)+i-1] = vectors[i]
+        end
+        done = lpad(round(100*(el[1]+el[2])/length(basis.states), digits=1), 5, " ")
+        print("\rGenerating Eigenspace: $(done)% done.")
+    end
+    println("\rEigenspace generated!                  ")
+    E0 = minimum(evals)
+    
+    return evals, evecs, E0
 end
 
 # ============================================ Hamiltonian ===========================================

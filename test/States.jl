@@ -29,7 +29,3 @@ end
 @testset "Internals" begin
     @test all(jED._block_slice((4,6,1,1)) .== 4:9)
 end
-
-@testset "cdag overlap" begin
-    @test all(jED._find_cdag_overlap_blocks(basis.blocklist) .== [3, 5, 6, 8, 9, 10, 11, 12, 13, -1, 14, 15, -1, 16, -1, -1])
-end

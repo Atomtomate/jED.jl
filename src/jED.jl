@@ -6,6 +6,7 @@ using Combinatorics
 using StaticArrays
 using LinearAlgebra
 using TOML
+using KrylovKit
 
 export Fockstate, Basis
 export Eigenspace, calc_Hamiltonian

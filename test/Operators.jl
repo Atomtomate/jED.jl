@@ -67,11 +67,22 @@ end
     @test jED.overlap_ni_nj(t1,t2, 7,5) == 0
 end
 
-@testset "overlap_2" begin
-    a = randn(3)
-    b = randn(3)
-    ac = randn(ComplexF64, 3)
-    bc = randn(ComplexF64, 3)
-    @test jED.overlap_2(a,b) ≈ dot(a,b)^2
-    @test jED.overlap_2(ac,bc) ≈ conj(dot(ac,bc)) * dot(ac,bc)
+@testset "overlap cdag" begin
+    ov_bi = jED._find_cdag_overlap_blocks(basis.blocklist; insert_spin=-1)
+    ov_bi2 = jED._find_cdag_overlap_blocks(basis.blocklist; insert_spin=+1)
+    for (i,bl_i) in enumerate(ov_bi) 
+        if bl_i != -1
+            @test basis.blocklist[i][3] == basis.blocklist[bl_i][3] - 1
+            @test basis.blocklist[i][4] == basis.blocklist[bl_i][4] + 1
+            if basis.blocklist[i][4] != basis.blocklist[bl_i][4] + 1
+                println("$i, $bl_i")
+            end
+        end
+    end
+    for (i,bl_i2) in enumerate(ov_bi2) 
+        if bl_i2 != -1
+            @test basis.blocklist[i][3] == basis.blocklist[bl_i2][3] - 1
+            @test basis.blocklist[i][4] == basis.blocklist[bl_i2][4] - 1
+        end
+    end
 end

@@ -12,28 +12,27 @@
 
 # =========================================== Overlap Matrix =========================================
 """
-    overlapMatrix(es::Eigenspace, expE_list::Vector{Float64}, ket_block_index::Int)::Matrix{Float64}
+    overlapMatrix(es::Eigenspace, ket_block_index::Int)::Matrix{Float64}
 
-Computes ``|\\langle i | c^\\dagger | j \\rangle|^2 \\frac{e^{-\\beta E_i} + e^{-\\beta E_j}}{Z}``.
+Computes ``|\\langle i | c^\\dagger | j \\rangle|^2.
 TODO: not used for now, probably usefull for 2-particle GF.
 """
-function overlapMatrix(es::Eigenspace, expE_list::Vector{Float64}, ket_block_index::Int)::Matrix{Float64}
+function overlapMatrix(es::Eigenspace, ket_block_index::Int)::Matrix{Float64}
     startInd_ket, blockSize_ket, Nel_ket, S_ket = es.blocklist[ket_block_index]
     indN = searchsorted(map(x->x[3],es.blocklist), Nel_ket+1)
-    indS = searchsortedfirst(map(x->x[4],es.blocklist[indN]), S_ket+1)
+    indS = searchsortedfirst(map(x->x[4],es.blocklist[indN]), S_ket-1)
     bra_block_index = first(indN) + indS - 1
-    if bra_block_index > last(indN)  # S+1 not found!
+    if bra_block_index > last(indN)  # S-1 not found!
         return Matrix{Float64}(undef, 0, 0)
     end
-    startInd_bra, blockSize_bra, Nel_bra, S_bra = es.blocklist[bra_block_index]
     res = Matrix{Float64}(undef, blockSize_bra, blockSize_bra)
     #res = zeros(blockSize_bra, blockSize_bra)
 
-    slice = startInd_bra:startInd_bra+blockSize_bra-1
+    slice = _block_sclice(es.blocklist[bra_block_index])
     for (i,ii) in enumerate(slice)
         res[i,i] = 0.0
         for (j,jj) in enumerate((ii+1):last(slice))
-            res[i, j+i] = overlap_2(es.evecs[ii],es.evecs[jj])*(expE_list[ii] + expE_list[jj])
+            res[i, j+i] = overlap_2(es.evecs[ii],es.evecs[jj])
         end
     end
     return UpperTriangular(res)
