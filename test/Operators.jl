@@ -11,6 +11,22 @@ end
 @testset "operator c/cdag" begin
     t1 = jED.SVector{8}(Bool[1,1,1,1,0,1,0,1])
     t2 = jED.SVector{8}(Bool[0,1,1,1,0,1,0,1])
+    t3 = jED.SVector{6}(Bool[1,0,1,0,0,1])
+    t4 = jED.SVector{6}(Bool[1,0,1,1,0,1])
+    c1 = create_op(basis, 4)
+    c2 = ann_op(basis, 4)
+    c3 = create_op(basis, 1)
+    c4 = ann_op(basis, 1)
+    @test c1.N_inc == 1
+    @test c2.N_inc == -1
+    @test c1.S_inc == -1
+    @test c2.S_inc == 1
+    @test c1.N_inc == 1
+    @test c2.N_inc == -1
+    @test c1.S_inc == -1
+    @test c2.S_inc == 1
+    @test all(c1(t3) .== t4)
+    @test all(c2(t4) .== t3)
     @test jED.create(t1, 1) === nothing
     @test all(jED.ann(t1, 1) .== t2)
     @test all(jED.create(t2, 1) .== t1)
@@ -68,8 +84,10 @@ end
 end
 
 @testset "overlap cdag" begin
-    ov_bi = jED._find_cdag_overlap_blocks(basis.blocklist; insert_spin=-1)
-    ov_bi2 = jED._find_cdag_overlap_blocks(basis.blocklist; insert_spin=+1)
+    c1 = create_op(basis, 4)
+    c2 = create_op(basis, 1)
+    ov_bi = jED._find_cdag_overlap_blocks(basis.blocklist, c1)
+    ov_bi2 = jED._find_cdag_overlap_blocks(basis.blocklist, c2)
     for (i,bl_i) in enumerate(ov_bi) 
         if bl_i != -1
             @test basis.blocklist[i][3] == basis.blocklist[bl_i][3] - 1

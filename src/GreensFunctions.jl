@@ -43,7 +43,6 @@ end
 
 function _overlap(es::Eigenspace, basis::Basis, i::Int, freq, β)
 
-    overlap_indices = _find_cdag_overlap_index_naive(basis, 1)
     res = zeros(ComplexF64,length(ket_slice), length(bra_slice))
     for bra_i in es.evecs
 
