@@ -56,7 +56,7 @@ function Eigenspace(model::Model, basis::Basis)
     println("\rEigenspace generated!                  ")
     E0 = minimum(evals)
     
-    return Eigenspace{EVecType}(evals, evecs, E0)
+    return Eigenspace{EVecType}(evals .- E0, evecs, E0)
 end
 
 function Eigenspace_L(model::Model, basis::Basis)

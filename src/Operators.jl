@@ -167,10 +167,7 @@ function overlap_ni_nj(bra::Fockstate, ket::Fockstate, i::Int, j::Int)::Bool
     return ket[i] & ket[j] & overlap(bra,ket)
 end
 
-
-
-# ------------------------------------------- Eigen States -------------------------------------------
-
+# ----------------------------------------- Helper Functions -----------------------------------------
 """
     overlap_2(bra::Vector, ket::Vector)
 
@@ -182,6 +179,45 @@ function overlap_2(bra::Vector{ComplexF64}, ket::Vector{ComplexF64})::Float64
 end
 
 overlap_2(bra::Vector{Float64}, ket::Vector{Float64})::Float64 = dot(bra,ket)^2
+
+
+"""
+_overlap_list(basis::Basis[, i::Int, j::Int], op::Function)
+
+Calculates the overlap between block `i` and `j` under `op`. Builds full overlap indices for all block if `i` and `j` are not provided.
+
+# Example
+```
+julia> basis = jED.Basis(3)
+julia> op(b) = jED.create(b, 4)  # creation operator for spin down at site 1 of 3
+julia> jED._overlap_list(basis, 2, 4, op)
+[0, 1, 2]
+``` 
+"""
+function _overlap_list(basis::Basis, i::Int, j::Int, op::Operator)
+    slice_i = _block_slice(basis.blocklist[i])
+    slice_j = _block_slice(basis.blocklist[j])
+    res = zeros(Int, length(slice_i))
+    for (i,bi) in enumerate(basis.states[slice_i])
+        b_new = op(bi)
+        for (j,bj) in enumerate(basis.states[slice_j])
+            all(b_new.== bj) && (res[i] = j)
+        end
+    end
+    return res
+end
+
+function _overlap_list(basis::Basis, op::Operator)
+    ov_i = _find_cdag_overlap_blocks(basis.blocklist, op)
+    res = zeros(Int, length(basis.states))
+    for (i,j) in enumerate(ov_i)
+        slice_i = _block_slice(basis.blocklist[i])
+        if j > 0
+            res[slice_i] = _overlap_list(basis, i, j, op)
+        end
+    end
+    return res
+end
 
 
 """
@@ -203,60 +239,29 @@ function _find_cdag_overlap_blocks(blocklist::Vector{Blockinfo}, op::Operator)
         if length(indN) > 0
             indS = searchsortedfirst(map(x->x[4],blocklist[indN]), S_ket+op.S_inc)
             val = first(indN) + indS - 1
-            res[bi] = val <= length(blocklist) && blocklist[val][4] == S_ket+op.S_inc ? val : -1
+            res[bi] = val <= length(blocklist) && blocklist[val][4] == S_ket+op.S_inc ? val : 0
         else
-            res[bi] = -1
+            res[bi] = 0
         end
     end
     return res
 end
 
 """
-_overlap_list(basis::Basis[, i::Int, j::Int], op::Function)
+    _overlap_cdagger_ev!(tmp::Vector{Float64}, vec1::Vector{Float64}, vec2::Vector{Float64}, perm::Vector{Int})::Float64
 
-Calculates the overlap between block `i` and `j` under `op`. Builds full overlap indices for all block if `i` and `j` are not provided.
+Computes ``\\langle \\text{EV}_j | c^\\dagger_k | \\text{EV}_i \\rangle`` where ``\\c^\\dagger`` has been computed in the Fockbasis and is given as a permutation of indices for ``\\langle \\text{EV}_j |``.
 
-# Example
-```
-julia> basis = jED.Basis(3)
-julia> op(b) = jED.create(b, 4)  # creation operator for spin down at site 1 of 3
-julia> jED._overlap_list(basis, 2, 4, op)
-[0, 1, 2]
-``` 
+This is an internal function used to compute the [`overlaps`](@ref overlap_cdagger).
 """
-function _overlap_list(basis::Basis, i::Int, j::Int, op::Function)
-    slice_i = _block_slice(basis.blocklist[i])
-    slice_j = _block_slice(basis.blocklist[j])
-    res = zeros(Int, length(slice_i))
-    for (i,bi) in enumerate(basis.states[slice_i])
-        b_new = op(bi)
-        for (j,bj) in enumerate(basis.states[slice_j])
-            all(b_new.== bj) && (res[i] = j)
+function _overlap_cdagger_ev!(tmp::Vector{Float64}, vec1::Vector{Float64}, vec2::Vector{Float64}, perm::Vector{Int})::Float64
+    for (i,p) in enumerate(perm)
+        if p == 0
+            tmp[i] = 0
+        else
+            tmp[i] = vec2[p]
         end
     end
-    return res
+    return dot(vec1, tmp)
 end
 
-function _overlap_list(basis::Basis, op::Function)
-    ov_i = _find_cdag_overlap_blocks(basis.blocklist, op)
-    res = zeros(Int, length(basis.states))
-    for (i,j) in enumerate(ov_i)
-        slice_i = _block_slice(basis.blocklist[i])
-        if j != -1
-            res[slice_i] = _overlap_list(basis, i, j, op)
-        end
-    end
-    return res
-end
-# function _build_cdag_overlap_slices(blocklist::Vector{Blockinfo})
-#     overlap_target = _find_cdag_overlap_blocks(blocklist)
-#     res = Vector{Tuple{UnitRange{Int},UnitRange{Int}}}(undef, count(overlap_target .> 0))
-#     j = 1
-#     for i in 1:length(blocklist)
-#         if overlap_target[i] > 0
-#             res[j] = (_block_slice(blocklist[i]), _block_slice(blocklist[overlap_target[i]]))
-#             j += 1
-#         end
-#     end
-#     return res
-# end

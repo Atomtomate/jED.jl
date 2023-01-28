@@ -13,7 +13,7 @@
 Calculates the partition function from [`eigenspace`](@ref Eigenspace) and the inverse temperature `β`.
 """
 function calc_Z(eigenspace::Eigenspace, β::Float64)
-    return sum(exp.(-β .* (eigenspace.evals .- eigenspace.E0)))
+    return sum(exp.(-β .* (eigenspace.evals)))
 end
 
 """
@@ -22,7 +22,7 @@ end
 Calculates the total energy from [`eigenspace`](@ref Eigenspace) and the inverse temperature `β`.
 """
 function calc_E(eigenspace::Eigenspace, β::Float64)
-    return sum(eigenspace.evals .* exp.(-β .* (eigenspace.evals .- eigenspace.E0))) / calc_Z(eigenspace, β)
+    return sum(eigenspace.evals .* exp.(-β .* (eigenspace.evals))) / calc_Z(eigenspace, β)
 end
 #
 # """

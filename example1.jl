@@ -39,4 +39,4 @@ E = calc_E(es, β)
 println("E₀ = $(es.E0)\nZ  = $Z\nE  = $E")
 
 freq_arr = [1im * (2*n+1)*π/β for n in 0:10]
-#GF = calc_GF_1(es, basis, freq_arr, β)
+GF = calc_GF_1(basis, es, freq_arr, β)

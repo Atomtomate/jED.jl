@@ -39,46 +39,92 @@ function overlapMatrix(es::Eigenspace, ket_block_index::Int)::Matrix{Float64}
 end
 
 # ============================================ 1 Particle GF =========================================
+# TODO: refactor: loop over block overlaps is repeated twice
+"""
 
-
-function _overlap(es::Eigenspace, basis::Basis, i::Int, freq, β)
-
-    res = zeros(ComplexF64,length(ket_slice), length(bra_slice))
-    for bra_i in es.evecs
-
-    end
-    for (i,ket_i) in enumerate(es.evecs[ket_slice])
-        for (j,bra_i) in enumerate(es.evecs[bra_slice])
-            tmp = 0.0
-            len = min(length(ket_i),length(bra_i))
-            for ki in 1:len
-                for bi in 1:len
-                    #println(i, " ", j, ": ", ki, "*", bi)
-                    tmp += (ket_i[ki]*bra_i[bi])^2
+"""
+function overlap_cdagger(basis::Basis, es::Eigenspace, block_overlaps::Vector{Int}; state = 1) 
+    # state = 1 <=> spin down impurity
+    op = create_op(basis, state)
+    bl = basis.blocklist
+    #TODO: overlaps can be 1D list, when list of evals is computed as well
+    overlaps = Vector{Matrix{Float64}}(undef, length(bl))
+    for (block_from, block_to) in enumerate(block_overlaps)
+        if block_to > 0
+            len_from = bl[block_from][2]
+            len_to = bl[block_to][2]
+            slice_from = _block_slice(bl[block_from])
+            slice_to = _block_slice(bl[block_to])
+            ov = _overlap_list(basis, block_from, block_to, op)
+            overlaps[block_from] = Matrix{Float64}(undef, len_to,len_from)
+            for (i_from,ev_from) in enumerate(es.evecs[slice_from])
+                tmp = similar(ev_from)
+                for (i_to,ev_to) in enumerate(es.evecs[slice_to])
+                    overlaps[block_from][i_to,i_from] = _overlap_cdagger_ev!(tmp, ev_from, ev_to, ov)^2
                 end
             end
-            res[i,j] += tmp
-            #res[i,j] += (exp(-β * es.evals[ket_slice[i]]) + exp(- β * es.evals[bra_slice[j]])) * tmp^2 / ( es.evals[ket_slice[i]] - es.evals[bra_slice[j]] + freq)
-            #res += (exp(-β * es.evals[bra_i]) + exp(-β * es.evals[ket_i])) * tmp^2 / (es.evals[bra_i] - es.evals[ket_i] + freq)
+        else
+            overlaps[block_from] = Matrix{Float64}(undef, 0,0)
         end
     end
-        return res
+    return overlaps
 end
 
+function prefactor(basis::Basis, es::Eigenspace, block_overlaps::Vector{Int}, β::Float64)
+    bl = basis.blocklist
+    #TODO: overlaps can be 1D list, when list of evals is computed as well
+    prefactor = Vector{Matrix{Float64}}(undef, length(bl))
+    for (block_from, block_to) in enumerate(block_overlaps)
+        if block_to > 0
+            len_from = bl[block_from][2]
+            len_to = bl[block_to][2]
+            slice_from = _block_slice(bl[block_from])
+            slice_to = _block_slice(bl[block_to])
+            prefactor[block_from] = exp.(-β .* (es.evals[slice_from]))' .+ exp.(-β .* (es.evals[slice_to])) 
+        else
+            prefactor[block_from] = Matrix{Float64}(undef, 0,0)
+        end
+    end
+    return prefactor
+end
+
+
+function νfactor(basis::Basis, es::Eigenspace, block_overlaps::Vector{Int}, ν::ComplexF64)
+    bl = basis.blocklist
+    #TODO: overlaps can be 1D list, when list of evals is computed as well
+    prefactor = Vector{Matrix{ComplexF64}}(undef, length(bl))
+    for (block_from, block_to) in enumerate(block_overlaps)
+        if block_to > 0
+            len_from = bl[block_from][2]
+            len_to = bl[block_to][2]
+            slice_from = _block_slice(bl[block_from])
+            slice_to = _block_slice(bl[block_to])
+            prefactor[block_from] = ν .- (es.evals[slice_from] .- es.evals[slice_to]')
+                # exp.(-β .* (es.evals[slice_from]))' .+ exp.(-β .* (es.evals[slice_to])) 
+        else
+            prefactor[block_from] = Matrix{Float64}(undef, 0,0)
+        end
+    end
+    return prefactor
+end
 """
     calc_GF_1(es::Eigenspace, freq::ComplexF64, β::Float64)
 
 Computes ``|\\langle i | c^\\dagger | j \\rangle|^2 \\frac{e^{-\\beta E_i} + e^{-\\beta E_j}}{Z (E_j - E_i + freq)}``.
 TODO: not tested
 """
-function calc_GF_1(es::Eigenspace, basis::Basis, freqList::Vector{ComplexF64}, β::Float64)
+function calc_GF_1(basis::Basis, es::Eigenspace, freqList::Vector{ComplexF64}, β::Float64)
     Z = calc_Z(es, β)
-    expE_list = exp.(-β .* (es.evals .- es.E0))
     res = zeros(ComplexF64, length(freqList))
-
-    for i in 1:length(es.cdag_ov)
-        for (fi, freq) in enumerate(freqList)
-            res[fi] += sum(_overlap(es, i, freq, β))
+    state = 1
+    op =  create_op(basis, state)
+    ov = _find_cdag_overlap_blocks(basis.blocklist, op)
+    lm = overlap_cdagger(basis, es, ov)
+    pf = prefactor(basis, es, ov, β)
+    for (i,f) in enumerate(freqList)
+        nf = νfactor(basis, es, ov, f)
+        for j in 1:length(lm)
+            res[i] += sum(lm[j] .* pf[j] ./ transpose(nf[j]))
         end
     end
     return res ./ Z

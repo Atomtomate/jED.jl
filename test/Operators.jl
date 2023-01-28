@@ -38,6 +38,10 @@ end
     t2 = jED.SVector{8}(Bool[1,1,0,1,1,1,0,1])
     @test jED.overlap(t1,t1) == 1
     @test jED.overlap(t1,t2) == 0
+    op_up = create_op(basis, 1) # Creation operator for ↑ at impurity
+    ov_i = jED._find_cdag_overlap_blocks(basis.blocklist, op_up)
+    ov_i_fortran = [3,5,6,8,9,10,11,12,13,0,14,15,0,16,0,0] # exported from idmat
+    @test all(ov_i .== ov_i_fortran) 
 end
 
 @testset "overlap cdagger c" begin
@@ -89,7 +93,7 @@ end
     ov_bi = jED._find_cdag_overlap_blocks(basis.blocklist, c1)
     ov_bi2 = jED._find_cdag_overlap_blocks(basis.blocklist, c2)
     for (i,bl_i) in enumerate(ov_bi) 
-        if bl_i != -1
+        if bl_i > 0 
             @test basis.blocklist[i][3] == basis.blocklist[bl_i][3] - 1
             @test basis.blocklist[i][4] == basis.blocklist[bl_i][4] + 1
             if basis.blocklist[i][4] != basis.blocklist[bl_i][4] + 1
@@ -98,7 +102,7 @@ end
         end
     end
     for (i,bl_i2) in enumerate(ov_bi2) 
-        if bl_i2 != -1
+        if bl_i2 > 0
             @test basis.blocklist[i][3] == basis.blocklist[bl_i2][3] - 1
             @test basis.blocklist[i][4] == basis.blocklist[bl_i2][4] - 1
         end

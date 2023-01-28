@@ -22,9 +22,9 @@ to = TimerOutput()
 
 include("States.jl")
 include("IO.jl")
-include("Operators.jl")
 include("Models.jl")
 include("Eigenspace.jl")
+include("Operators.jl")
 include("Observables.jl")
 include("GreensFunctions.jl")
 
