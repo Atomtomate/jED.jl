@@ -74,13 +74,12 @@ function prefactor(basis::Basis, es::Eigenspace, block_overlaps::Vector{Int}, β
     bl = basis.blocklist
     #TODO: overlaps can be 1D list, when list of evals is computed as well
     prefactor = Vector{Matrix{Float64}}(undef, length(bl))
+    expE = exp.(-β .* es.evals)
     for (block_from, block_to) in enumerate(block_overlaps)
         if block_to > 0
-            len_from = bl[block_from][2]
-            len_to = bl[block_to][2]
             slice_from = _block_slice(bl[block_from])
             slice_to = _block_slice(bl[block_to])
-            prefactor[block_from] = exp.(-β .* (es.evals[slice_from]))' .+ exp.(-β .* (es.evals[slice_to])) 
+            prefactor[block_from] = expE[slice_from]' .+ expE[slice_to] 
         else
             prefactor[block_from] = Matrix{Float64}(undef, 0,0)
         end
@@ -95,12 +94,9 @@ function νfactor(basis::Basis, es::Eigenspace, block_overlaps::Vector{Int}, ν:
     prefactor = Vector{Matrix{ComplexF64}}(undef, length(bl))
     for (block_from, block_to) in enumerate(block_overlaps)
         if block_to > 0
-            len_from = bl[block_from][2]
-            len_to = bl[block_to][2]
             slice_from = _block_slice(bl[block_from])
             slice_to = _block_slice(bl[block_to])
             prefactor[block_from] = ν .- (es.evals[slice_from] .- es.evals[slice_to]')
-                # exp.(-β .* (es.evals[slice_from]))' .+ exp.(-β .* (es.evals[slice_to])) 
         else
             prefactor[block_from] = Matrix{Float64}(undef, 0,0)
         end
