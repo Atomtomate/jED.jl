@@ -17,6 +17,11 @@ Currently implemented:
 abstract type Model end
 
 # ===================== Anderson Impurity Model =====================
+mutable struct AIMParams{T}
+    ϵₖ::Vector{Float64}
+    Vₖ::Vector{T}
+end
+
 """
     AIM <: Model
     AIM(ϵₖ::Vector{Float64}, Vₖ::Vector{T}, μ::Float64, U::Float64)
@@ -45,8 +50,7 @@ struct AIM{NSites, T} <: Model
     tMatrix::SMatrix{NSites,NSites,T}
     UMatrix::SMatrix{NSites,NSites,T}
     JMatrix::SMatrix{NSites,NSites,T}
-    ϵₖ::Vector{Float64}
-    Vₖ::Vector{T}
+    params::AIMParams
     μ::Float64
     U::Float64
     function AIM(ϵₖ::Vector{Float64}, Vₖ::Vector{T}, μ::Float64, U::Float64) where T <: Union{ComplexF64, Float64}
@@ -61,7 +65,7 @@ struct AIM{NSites, T} <: Model
             new{NSites, T}(SMatrix{NSites,NSites,T}(tMatrix), 
                            SMatrix{NSites,NSites,T}(UMatrix), 
                            SMatrix{NSites,NSites,T}(JMatrix),
-                           ϵₖ, Vₖ, μ, U)
+                           AIMParams(ϵₖ, Vₖ), μ, U)
     end
 end
 
@@ -69,5 +73,5 @@ end
 function show(io::IO, ::MIME"text/plain", m::AIM)
     compact = get(io, :compact, false)
     println("Anderson Impurity Model (μ=$(m.μ), U=$(m.U)) with $(size(m.tMatrix,1)) bath sites.")
-    println("Bath levels: $(round.(m.ϵₖ, digits=2)), Hoppings: $(round.(m.Vₖ, digits=2))")
+    println("Bath levels: $(round.(m.params.ϵₖ, digits=2)), Hoppings: $(round.(m.params.Vₖ, digits=2))")
 end

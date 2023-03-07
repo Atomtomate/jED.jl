@@ -28,7 +28,7 @@ function overlapMatrix(es::Eigenspace, ket_block_index::Int)::Matrix{Float64}
     res = Matrix{Float64}(undef, blockSize_bra, blockSize_bra)
     #res = zeros(blockSize_bra, blockSize_bra)
 
-    slice = _block_sclice(es.blocklist[bra_block_index])
+    slice = _block_slice(es.blocklist[bra_block_index])
     for (i,ii) in enumerate(slice)
         res[i,i] = 0.0
         for (j,jj) in enumerate((ii+1):last(slice))
@@ -109,19 +109,21 @@ end
 Computes ``|\\langle i | c^\\dagger | j \\rangle|^2 \\frac{e^{-\\beta E_i} + e^{-\\beta E_j}}{Z (E_j - E_i + freq)}``.
 TODO: not tested
 """
-function calc_GF_1(basis::Basis, es::Eigenspace, freqList::Vector{ComplexF64}, β::Float64)
+function calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{ComplexF64}, β::Float64)
     Z = calc_Z(es, β)
-    res = zeros(ComplexF64, length(freqList))
+    res = similar(νnGrid)
+    fill!(res, 0.0)
     state = 1
     op =  create_op(basis, state)
     ov = _find_cdag_overlap_blocks(basis.blocklist, op)
     lm = overlap_cdagger(basis, es, ov)
     pf = prefactor(basis, es, ov, β)
-    for (i,f) in enumerate(freqList)
-        nf = νfactor(basis, es, ov, f)
+    for νi in eachindex(νnGrid)
+        νn = νnGrid[νi]
+        nf = νfactor(basis, es, ov, νn)
         for j in 1:length(lm)
-            res[i] += sum(lm[j] .* pf[j] ./ transpose(nf[j]))
+            res[νi] += sum(lm[j] .* pf[j] ./ transpose(nf[j]))
         end
     end
-    return res ./ Z
+    return -conj.(res) ./ Z
 end

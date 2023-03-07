@@ -38,7 +38,10 @@ end
     include("GreensFunctions.jl")
 end
 
+@testset "DMFTLoop" begin
+    include("DMFTLoop.jl")
+end
+
 @testset "jED.jl" begin
     include("full_N2_run.jl")
-
 end
