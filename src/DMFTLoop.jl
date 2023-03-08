@@ -32,11 +32,21 @@ end
 
 """
     GWeiss(νnGrid::FermionicMatsubaraGrid, p::AIMParams)
+    GWeiss!(target::Vector, νnGrid::Vector, μ::Float64, p::AIMParams)
 
 Computes Weiss Green's frunction from [`Anderson Parameters`](@ref AIMParams).
 """
 function GWeiss(νnGrid::FermionicMatsubaraGrid, μ::Float64, p::AIMParams)
-    return OffsetVector([1 ./ (νn + μ - sum((p.Vₖ .^ 2) ./(νn .- p.ϵₖ))) for νn in νnGrid], axes(νnGrid))
+    res = similar(νnGrid.parent)
+    GWeiss!(res, νnGrid.parent, μ, p.ϵₖ, p.Vₖ)
+    return OffsetVector(res, axes(νnGrid))
+end
+
+function GWeiss!(target::Vector, νnGrid::Vector, μ::Float64, ϵₖ::Vector, Vₖ::Vector)
+    length(target) != length(νnGrid) && error("νnGrid and target must have the same length!")
+    for i in 1:length(νnGrid)
+        target[i] = 1 / (νnGrid[i] + μ - sum((Vₖ .^ 2) ./ (νnGrid[i] .- ϵₖ)))
+    end
 end
 
 """
@@ -45,7 +55,7 @@ end
 Compute Updates Weiss Green's function from impurity self-energy via ``[G_\\text{loc} + \\Sigma_\\text{Imp}]^{-1}`` (see [`GLoc`](@ref GLoc) and [`Σ_from_GImp`](@ref Σ_from_GImp)).
 """
 function GWeiss_from_Imp(GLoc::MatsubaraF, ΣImp::MatsubaraF)
-    return 1 ./ (1 ./ GLoc .+ ΣImp)
+    return 1 ./ (ΣImp .+ 1 ./ GLoc)
 end
 
 """
@@ -85,7 +95,7 @@ end
 Computes hybridization function from Weiss Green's function via ``\\Delta^{\\nu} = i\\nu_n + \\mu - \\left(\\mathcal{G}^{\\nu}_0\\right^{-1}``.
 """
 function Δ_from_GWeiss(GWeiss::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid)
-    return νnGrid .+ μ .- 1 ./ GWeiss
+    return νnGrid .- μ .- 1 ./ GWeiss
 end
 
 """
@@ -105,11 +115,19 @@ function GLoc(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, k
     return GLoc
 end
 
-function fit_AIM_params!(p::AIMParams, GWeiss::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid)
-    Δ_i = Δ_from_GWeiss(GWeiss, μ, νnGrid).parent
+function fit_AIM_params!(p::AIMParams, GLoc::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid)
+
+    tmp = similar(νnGrid.parent)
     p0  = vcat(p.ϵₖ, p.Vₖ)
-    fit = curve_fit(Δ_AIM_real, νnGrid.parent, vcat(real(Δ_i),imag(Δ_i)), p0)
     N::Int = floor(Int, length(p0)/2)
+
+    function GW_fit_real(νnGrid::Vector, p::Vector)::Vector{Float64} 
+        GWeiss!(tmp, νnGrid, μ, p[1:N], p[(N+1):end])
+        vcat(real(tmp), imag(tmp))
+    end
+
+    target = vcat(real(GLoc.parent),imag(GLoc.parent))
+    fit = curve_fit(GW_fit_real, νnGrid.parent, target, p0)
     p.ϵₖ[:] = fit.param[1:N]
     p.Vₖ[:] = fit.param[N+1:end]
 end

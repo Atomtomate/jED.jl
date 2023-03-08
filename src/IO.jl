@@ -11,7 +11,7 @@ import Base: show
 # ========================= Custom type overloads =========================
 function show(io::IO, ::MIME"text/plain", f::Fockstate{Length}) where Length
     compact = get(io, :compact, false)
-    bb = rpad(bitstring(BitVector(f)), Length, "0")
+    bb = filter(!isspace, rpad(bitstring(BitVector(f)), Length, "0"))
     N = floor(Int,Length/2)
     for i in 1:N
             du = parse(Int, bb[i])
