@@ -5,7 +5,6 @@ using TimerOutputs
 to = TimerOutput()
 
 function run_DMFT_loop()
-
     ϵₖ = [1.0, 0.5, -1.1, -0.6]
     Vₖ = [0.25, 0.35, 0.45, 0.55]
     p  = AIMParams(ϵₖ, Vₖ)
