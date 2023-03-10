@@ -17,9 +17,15 @@ Currently implemented:
 abstract type Model end
 
 # ===================== Anderson Impurity Model =====================
-mutable struct AIMParams{T}
+mutable struct AIMParams
     ϵₖ::Vector{Float64}
-    Vₖ::Vector{T}
+    Vₖ::Vector{Float64}
+end
+
+function AIMParams(p_vec::Vector)
+    length(p_vec) % 2 != 0 && error("p_vec must contain bath energies and hybridizations and therefore have an even length!")
+    N = floor(Int,length(p_vec)/2)
+    AIMParams(p_vec[1:N], p_vec[N+1:end])
 end
 
 """

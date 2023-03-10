@@ -1,7 +1,6 @@
 using Pkg
 Pkg.activate(@__DIR__)
 using jED
-using TimerOutputs
 
 
 ϵₖ = [1.0, 0.5, -1.1, -0.6]

@@ -132,7 +132,7 @@ function fit_AIM_params!(p::AIMParams, GLoc::MatsubaraF, μ::Float64, νnGrid::F
     p.Vₖ[:] = fit.param[N+1:end]
 end
 
-function model_ED(iν, p)
+function model_ED(iν::Vector, p::Vector)
     Δ_fit = zeros(ComplexF64,length(iν))
     for (i,νn) in enumerate(iν)
         tmp  = sum((p[(N+1):end] .^ 2) ./ (νn .- p[1:N]))
