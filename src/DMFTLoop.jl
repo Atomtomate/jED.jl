@@ -107,6 +107,11 @@ TODO: simplify -conj!!!
 function GLoc(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
     GLoc = similar(ΣImp)
     tmp = μ .- dispersion(kG)
+
+    # TODO: this is only here for testing purposes! Remove and implement multi-orbital case
+    if typeof(kG).parameters[1] <: Hofstadter
+        tmp = tmp[end,end,:]
+    end
     for νi in eachindex(νnGrid)
         νn = νnGrid[νi]
         GLoc[νi] = kintegrate(kG, 1 ./ (νn .+ tmp .- ΣImp[νi]))
