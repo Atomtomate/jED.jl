@@ -120,6 +120,25 @@ function GLoc(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, k
     return GLoc
 end
 
+#TODO: stub for multiu orbital GLoc, atm selecting not returning full GLoc
+function GLoc_MO(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
+    GLoc = similar(ΣImp)
+    tmp = dispersion(kG)
+
+    tmp2::Vector{ComplexF64} = Vector{eltype(tmp)}(undef, size(tmp,3))
+    tmp3::Matrix{ComplexF64} = Matrix{ComplexF64}(undef, size(tmp)[1:2]...)
+    for νi in eachindex(νnGrid)
+        νn = νnGrid[νi]
+        for ki in 1:size(tmp,3)
+            tmp3[:,:] = collect((μ .+ νn - ΣImp[νi])*I + tmp[:,:,ki])
+            tmp2[ki] = inv(tmp3)[2,2]
+        end
+        GLoc[νi] = kintegrate(kG, tmp2)
+    end
+    GLoc = 1 ./ (1 ./ GLoc .+ ΣImp)
+    return GLoc
+end
+
 function fit_AIM_params!(p::AIMParams, GLoc::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid)
 
     tmp = similar(νnGrid.parent)

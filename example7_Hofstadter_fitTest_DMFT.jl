@@ -14,7 +14,7 @@ function DMFT_Loop_test(;maxit = 20)
     μ  = 0.6
     U  = 1.2
     β  = 4.0
-    tsc= 1/(2*sqrt(2)) #0.25#*2*sqrt(2)
+    tsc= 0.25 #1/(2*sqrt(2)) #0.25#*2*sqrt(2)
     Nν = 1000
     Nk = 40
     α  = 0.2
@@ -36,7 +36,8 @@ function DMFT_Loop_test(;maxit = 20)
         GImp_i = calc_GF_1(basis, es, νnGrid, β)
         !isnothing(GImp_i_old) && (GImp_i = α .* GImp_i .+ (1-α) .* GImp_i_old)
         ΣImp_i = Σ_from_GImp(G0W, GImp_i)
-        GLoc_i = GLoc(ΣImp_i, μ, νnGrid, kG)
+        println("     Calculating GLoc")
+        GLoc_i = jED.GLoc_MO(ΣImp_i, μ, νnGrid, kG)
 
         #  ==== Define objective function, gradient and hessian
         tmp = similar(GLoc_i.parent) 
