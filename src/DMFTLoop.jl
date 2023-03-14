@@ -127,11 +127,12 @@ function GLoc_MO(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid
 
     tmp2::Vector{ComplexF64} = Vector{eltype(tmp)}(undef, size(tmp,3))
     tmp3::Matrix{ComplexF64} = Matrix{ComplexF64}(undef, size(tmp)[1:2]...)
+    iOrb::Int = 1
     for νi in eachindex(νnGrid)
         νn = νnGrid[νi]
         for ki in 1:size(tmp,3)
             tmp3[:,:] = collect((μ .+ νn - ΣImp[νi])*I + tmp[:,:,ki])
-            tmp2[ki] = inv(tmp3)[2,2]
+            tmp2[ki] = inv(tmp3)[iOrb,iOrb]
         end
         GLoc[νi] = kintegrate(kG, tmp2)
     end

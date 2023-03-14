@@ -14,10 +14,10 @@ function DMFT_Loop_test(;maxit = 20)
     μ  = 0.6
     U  = 1.2
     β  = 4.0
-    tsc= 0.25 #1/(2*sqrt(2)) #0.25#*2*sqrt(2)
+    tsc= 0.25
     Nν = 1000
     Nk = 40
-    α  = 0.2
+    α  = 0.4
     GImp_i = nothing
     GImp_i_old = nothing
 
