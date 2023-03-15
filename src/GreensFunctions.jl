@@ -88,7 +88,7 @@ function prefactor(basis::Basis, es::Eigenspace, block_overlaps::Vector{Int}, β
 end
 
 
-function νfactor(basis::Basis, es::Eigenspace, block_overlaps::Vector{Int}, ν::ComplexF64)
+function νfactor(basis::Basis, es::Eigenspace, block_overlaps::Vector{Int})
     bl = basis.blocklist
     #TODO: overlaps can be 1D list, when list of evals is computed as well
     prefactor = Vector{Matrix{ComplexF64}}(undef, length(bl))
@@ -96,7 +96,7 @@ function νfactor(basis::Basis, es::Eigenspace, block_overlaps::Vector{Int}, ν:
         if block_to > 0
             slice_from = _block_slice(bl[block_from])
             slice_to = _block_slice(bl[block_to])
-            prefactor[block_from] = ν .- (es.evals[slice_from] .- es.evals[slice_to]')
+            prefactor[block_from] = (es.evals[slice_from] .- es.evals[slice_to]')
         else
             prefactor[block_from] = Matrix{Float64}(undef, 0,0)
         end
@@ -109,7 +109,8 @@ end
 Computes ``|\\langle i | c^\\dagger | j \\rangle|^2 \\frac{e^{-\\beta E_i} + e^{-\\beta E_j}}{Z (E_j - E_i + freq)}``.
 TODO: not tested
 """
-function calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{ComplexF64}, β::Float64)
+function calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{ComplexF64}, β::Float64; prefac_cut::Float64=0.0)
+    global to
     Z = calc_Z(es, β)
     res = similar(νnGrid)
     fill!(res, 0.0)
@@ -118,11 +119,14 @@ function calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{Complex
     ov = _find_cdag_overlap_blocks(basis.blocklist, op)
     lm = overlap_cdagger(basis, es, ov)
     pf = prefactor(basis, es, ov, β)
+    nf = νfactor(basis, es, ov)
+    prefactors    = [lm[j] .* pf[j] for j in 1:length(lm)]
+    valid_indices = findall(x-> length(x) > 0 && maximum(abs.(x)) >= prefac_cut, prefactors)
     for νi in eachindex(νnGrid)
         νn = νnGrid[νi]
-        nf = νfactor(basis, es, ov, νn)
-        for j in 1:length(lm)
-            res[νi] += sum(lm[j] .* pf[j] ./ transpose(nf[j]))
+        for j in valid_indices
+            #TODO: reduce memory allocation overhead
+            res[νi] += sum(prefactors[j] ./ transpose(νn .- nf[j]))
         end
     end
     return -conj.(res) ./ Z

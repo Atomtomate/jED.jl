@@ -89,7 +89,6 @@ function DMFT_Loop_test(;maxit = 20)
 
         fit_AIM_params!(p, GLoc_i, μ, νnGrid)
         println("     iteration $i with AIM params ∑ Vₖ^2 = $(sum(p.Vₖ .^ 2)), checksum GImp = $(abs(sum(GImp_i)))")
-        display(p)
         
     end
 end

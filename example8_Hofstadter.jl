@@ -2,17 +2,19 @@ using Pkg
 Pkg.activate(@__DIR__)
 using jED
 using Printf
+using TimerOutputs
 
+global to = TimerOutput()
 
 function DMFT_Loop(;maxit = 20)
-    ϵₖ = [1.0, 0.5, -1.1, -0.6]
-    Vₖ = [0.25, 0.35, 0.45, 0.55]
+    ϵₖ = [1.0, 0.5, -1.1, -0.6, 0.7]
+    Vₖ = [0.25, 0.35, 0.45, 0.55, 0.60]
     p  = AIMParams(ϵₖ, Vₖ)
     μ  = 0.6
     U  = 1.2
-    β  = 4.0
+    β  = 40.0
     tsc= 0.25
-    Nν = 1000
+    Nν = 2000
     Nk = 40
     α  = 0.4
     GImp_i = nothing
@@ -31,7 +33,7 @@ function DMFT_Loop(;maxit = 20)
         es     = Eigenspace(model, basis);
         isnothing(GImp_i_old) ? GImp_i_old = deepcopy(GImp_i) : copyto!(GImp_i_old, GImp_i)
         println("     Calculating GImp")
-        GImp_i = calc_GF_1(basis, es, νnGrid, β)
+        GImp_i = calc_GF_1(basis, es, νnGrid, β, prefac_cut=1e-12)
         !isnothing(GImp_i_old) && (GImp_i = α .* GImp_i .+ (1-α) .* GImp_i_old)
         ΣImp_i = Σ_from_GImp(G0W, GImp_i)
         println("     Calculating GLoc")

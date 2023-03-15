@@ -120,7 +120,7 @@ function GLoc(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, k
     return GLoc
 end
 
-#TODO: stub for multiu orbital GLoc, atm selecting not returning full GLoc
+#TODO: stub for multi-orbital GLoc, atm selecting 1,1 instead of returning full GLoc
 function GLoc_MO(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
     GLoc = similar(ΣImp)
     tmp = dispersion(kG)
