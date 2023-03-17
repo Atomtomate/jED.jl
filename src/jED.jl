@@ -3,7 +3,7 @@ module jED
 using Logging, TimerOutputs
 using Printf
 using Combinatorics
-using StaticArrays, OffsetArrays
+using StaticArrays, OffsetArrays, DataStructures
 using LinearAlgebra
 using TOML
 using LsqFit
@@ -13,7 +13,7 @@ using Dispersions
 export Fockstate, Basis, Operator, create, ann, create_op, ann_op
 export Eigenspace, calc_Hamiltonian
 export calc_Z, calc_E
-export overlapMatrix, calc_GF_1
+export calc_GF_1
 
 # IO
 export show_matrix_block

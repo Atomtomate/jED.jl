@@ -6,9 +6,7 @@ to = TimerOutput()
 
 
 
-maxit = 20
-
-function run_DMFT_loop()
+function DMFT_Loop(;maxit = 20)
     ϵₖ = [1.0, 0.5, -1.1, -0.6]
     Vₖ = [0.25, 0.35, 0.45, 0.55]
     p  = AIMParams(ϵₖ, Vₖ)
@@ -21,6 +19,7 @@ function run_DMFT_loop()
     α   = 0.2
     GImp_i = nothing
     GImp_i_old = nothing
+    ΣImp_i = nothing
 
     kG     = jED.gen_kGrid("3Dsc-$tsc", Nk)
     basis  = jED.Basis(length(Vₖ) + 1);
@@ -42,7 +41,7 @@ function run_DMFT_loop()
         println("     iteration $i with AIM params ∑ Vₖ^2 = $(sum(p.Vₖ .^ 2)), checksum GImp = $(abs(sum(GImp_i)))")
         display(p)
     end
-    return GImp_i
+    return p, νnGrid, GImp_i, ΣImp_i
 end
 
-run_DMFT_loop()
+p, νnGrid, GImp, ΣImp = DMFT_Loop(maxit = 30)
