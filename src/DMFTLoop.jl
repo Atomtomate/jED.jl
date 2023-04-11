@@ -98,6 +98,24 @@ function Δ_from_GWeiss(GWeiss::MatsubaraF, μ::Float64, νnGrid::FermionicMatsu
     return νnGrid .- μ .- 1 ./ GWeiss
 end
 
+function GLoc_MO_old2(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
+    @assert length(νnGrid) <= length(ΣImp)
+    GLoc = zero(ΣImp)
+    tmp = dispersion(kG)
+
+    iOrb::Int = 1
+    for (ki, kMult) in enumerate(kG.kMult)
+        for νi in eachindex(νnGrid)
+            νn = νnGrid[νi]
+            @inbounds GLoc[νi] += kMult*(((μ .+ νn - ΣImp[νi])*I + tmp[:,:,ki])\I)[iOrb,iOrb]
+        end
+    end
+    GLoc = GLoc ./ Nk(kG)
+    GLoc = 1 ./ (1 ./ GLoc .+ ΣImp)
+    return GLoc
+end
+
+
 """
     GLoc(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
 
@@ -106,22 +124,23 @@ TODO: simplify -conj!!!
 """
 function GLoc(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
     GLoc = similar(ΣImp)
-    tmp = μ .- dispersion(kG)
+    tmp  = μ .+ dispersion(kG)
 
     # TODO: this is only here for testing purposes! Remove and implement multi-orbital case
     if typeof(kG).parameters[1] <: Hofstadter
-        tmp = tmp[end,end,:]
+        error("Call GLoc_MO for Hofstaedter model!")
     end
     for νi in eachindex(νnGrid)
         νn = νnGrid[νi]
-        GLoc[νi] = kintegrate(kG, 1 ./ (νn .+ tmp .- ΣImp[νi]))
+        GLoc[νi] = kintegrate(kG, 1 ./ (tmp .+ νn .- ΣImp[νi]))
     end
     GLoc = 1 ./ (1 ./ GLoc .+ ΣImp)
     return GLoc
 end
 
 #TODO: stub for multi-orbital GLoc, atm selecting 1,1 instead of returning full GLoc
-function GLoc_MO(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
+function GLoc_MO_old(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
+    @assert length(νnGrid) <= length(ΣImp)
     GLoc = similar(ΣImp)
     tmp = dispersion(kG)
 
@@ -137,6 +156,43 @@ function GLoc_MO(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid
         GLoc[νi] = kintegrate(kG, tmp2)
     end
     GLoc = 1 ./ (1 ./ GLoc .+ ΣImp)
+    return GLoc
+end
+
+#TODO: stub for multi-orbital GLoc, atm selecting 1,1 instead of returning full GLoc
+function GLoc_MO(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
+    @assert length(νnGrid) <= length(ΣImp)
+    GLoc = zero(ΣImp)
+    tmp  = convert.(ComplexF64, dispersion(kG))
+
+    #tmp2::Vector{ComplexF64} = Vector{eltype(tmp)}(undef, length(νnGrid))
+    iOrb::Int = 1
+    rhs_bak::Matrix{ComplexF64} = collect(Diagonal(ones(ComplexF64, size(tmp,1))))
+    rhs::Matrix{ComplexF64} = collect(Diagonal(ones(ComplexF64, size(tmp,1))))
+    for (ki, kMult) in enumerate(kG.kMult)
+        _, F = hessenberg(tmp[:,:,ki])
+        for νi in eachindex(νnGrid)
+            @inbounds copyto!(rhs, rhs_bak)
+            @inbounds val = (μ + νnGrid[νi] - ΣImp[νi])
+            # @timeit to "tmp3_1" ldiv!(F, I, shift=val)
+            @inbounds ldiv!(F, rhs, shift=val)
+            @inbounds GLoc[νi] += kMult * rhs[iOrb,iOrb]
+            #@timeit to "tmp3_3" GLoc[νi] += kMult * ((F + val*I)\I)[iOrb,iOrb]
+            # @timeit to "tmp3_1" copyto!(tmp3, tmp[:,:,ki])
+            # @timeit to "tmp3_2" for i in 1:size(tmp3,1)
+            #     @inbounds tmp3[i,i] += tmp_simp
+            # end
+            # #@timeit to "tmp3" tmp3[:,:] = collect(tmp_simp*I + tmp[:,:,ki])
+            # @timeit to "tmp4" tmp4 = SMatrix{L,L,ComplexF64}(tmp_simp*I + tmp[:,:,ki])
+            # @timeit to "tmp5" tmp2_2[ki] += kMult*inv(tmp4)[iOrb,iOrb]
+            #@timeit to "tmp2_1" LinearAlgebra.inv!(lu!(tmp3))
+            #@timeit to "tmp2" tmp2[ki] = tmp3[iOrb, iOrb]
+            #@timeit to "tmp2" tmp2[ki] = inv(tmp3)[iOrb,iOrb]
+        end
+    end
+
+    GLoc = GLoc ./ Nk(kG)
+    @timeit to "dyson" GLoc = 1 ./ (1 ./ GLoc .+ ΣImp)
     return GLoc
 end
 

@@ -8,15 +8,17 @@ using LsqFit
 
 
 function DMFT_Loop_test(;maxit = 20)
-    ϵₖ = [1.0, 0.5, -1.1, -0.6]
+    ϵₖ = [10.0, 5.0, -3.0, 20.5]
     Vₖ = [0.25, 0.35, 0.45, 0.55]
+    #ϵₖ = [1.0, 0.5, -1.1, -0.6]
+    #Vₖ = [0.25, 0.35, 0.45, 0.55]
     p  = AIMParams(ϵₖ, Vₖ)
-    μ  = 0.6
-    U  = 1.2
-    β  = 4.0
-    tsc= -0.40824829046386307/2
-    Nν = 1000
-    Nk = 20
+    μ  = 0.5
+    U  = 1.0
+    β  = 50.0
+    tsc= 0.40824829046386307/2
+    Nν = 2000
+    Nk = 60
     α  = 0.2
     GImp_i = nothing
     GImp_i_old = nothing
@@ -94,9 +96,9 @@ function DMFT_Loop_test(;maxit = 20)
         println(" -> sum(Vₖ²) = $(sum(p_Lsq[N+1:end] .^ 2))")
 
         fit_AIM_params!(p, GLoc_i, μ, νnGrid)
-        println("     iteration $i with AIM params ∑ Vₖ^2 = $(sum(p.Vₖ .^ 2)), checksum GImp = $(abs(sum(GImp_i)))")
-        display(p)
-        
+       
+        #p.ϵₖ = p_CG[1:N]
+        #p.Vₖ = p_CG[N+1:end]
     end
 end
 

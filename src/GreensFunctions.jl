@@ -14,13 +14,13 @@
 """
     Overlap
 
-Contains information about overlap of Fock states under given `Operator`(@ref Operator).
+Contains information about overlap of Fock states under given [`Operator`](@ref Operator).
 
 Fields
 -------------
 - **`op`**        : Function, operation on Fock state
 - **`ov_blocks`** : Vector{Int}, index is starting block, entry target
-- **`ov_list`**   : Vector{Int}, index is starting block, entry index in eigenvector (see `Eigenspace`(@ref Eigenspace))
+- **`ov_list`**   : Vector{Int}, index is starting block, entry index in eigenvector (see [`Eigenspace`](@ref Eigenspace))
 """
 struct Overlap
     op::Operator
@@ -34,7 +34,6 @@ struct Overlap
 end
 
 # ============================================ 1 Particle GF =========================================
-
 function overlap_EDiff(basis::Basis, es::Eigenspace, overlap::Overlap, β::Float64, ϵ_cut::Float64)
     bl = basis.blocklist
     res_EDiff   = Stack{Float64}()
@@ -63,10 +62,18 @@ function overlap_EDiff(basis::Basis, es::Eigenspace, overlap::Overlap, β::Float
 end
 
 """
-calc_GF_1(es::Eigenspace, freq::ComplexF64, β::Float64[, ϵ_cut = 1e-16])
+calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{ComplexF64}, β::Float64; ϵ_cut::Float64=1e-16, overlap=nothing)
 
 Computes ``|\\langle i | c^\\dagger | j \\rangle|^2 \\frac{e^{-\\beta E_i} + e^{-\\beta E_j}}{Z (E_j - E_i + freq)}``.
-TODO: not tested
+
+Arguments
+-------------
+- **`basis`**   : Basis, obtained with [`Basis`](@ref `Basis`).
+- **`es`**      : Eigenspace, obtained with [`Eigenspace`](@ref `Eigenspace`)
+- **`νnGrid`**  : AbstractVector{ComplexF64}, list of Matsubara Frequencies
+- **`β`**       : Float64, inverse temperature.
+- **`ϵ_cut`**   : Float64, cutoff for ``e^{-\\beta E_n}`` terms in Lehrmann representation (all contributions below this threshold are disregarded)
+- **`overlap`** : Overlap, precalculated overlap between blocks of basis. Obtained with [`Overlap`](@ref `Overlap`)
 """
 function calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{ComplexF64}, β::Float64; ϵ_cut::Float64=1e-16, overlap=nothing)
     global to
@@ -81,12 +88,12 @@ function calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{Complex
     else 
         overlap
     end
-    @timeit to "pf2" pf, nf = jED.overlap_EDiff(basis, es, overlap, β, ϵ_cut)
+    @timeit to "pf2" pf, nf = overlap_EDiff(basis, es, overlap, β, ϵ_cut)
     @timeit to "for" for νi in eachindex(νnGrid)
         νn = νnGrid[νi]
         for j in 1:length(pf)
             #TODO: reduce memory allocation overhead
-            res[νi] -= conj(sum(pf[j] / (νn - nf[j]))) / Z
+            res[νi] -= sum(pf[j] / (-νn - nf[j])) / Z
         end
     end
     return res 
