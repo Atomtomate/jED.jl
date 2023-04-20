@@ -7,15 +7,21 @@ using TimerOutputs
 global to = TimerOutput()
 
 function DMFT_Loop(;maxit = 30)
-    ϵₖ = [1.0, 0.5, -1.1, 1.2, -0.6, 0.7]
-    Vₖ = [0.25, 0.35, 0.45, 0.48, 0.55, 0.60]
+    ϵₖ = [1.859012640410684,
+-1.234144804393995,
+-0.327074265095705,
+0.164928397400499]
+    Vₖ = [0.21351085528763,
+0.299231813327473,
+0.269996433605904,
+0.203793698791301]
     p  = AIMParams(ϵₖ, Vₖ)
-    μ  = 0.4823938
-    U  = 7.0
-    β  = 50.0
-    Nν = 2000
-    Nk = 40
-    α  = 0.4
+    μ  = 0.08 #0.4823938
+    U  = 2.0
+    β  = 1.0
+    Nν = 500
+    Nk = 60
+    α  = 0.7
     GImp_i = nothing
     GImp_i_old = nothing
     ΣImp_i = nothing
@@ -36,7 +42,7 @@ function DMFT_Loop(;maxit = 30)
         es     = Eigenspace(model, basis);
         isnothing(GImp_i_old) ? GImp_i_old = deepcopy(GImp_i) : copyto!(GImp_i_old, GImp_i)
         println("     Calculating GImp")
-        @timeit to "GImp" GImp_i = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=1e-12, overlap=overlap)
+        @timeit to "GImp" GImp_i = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=1e-12, overlap=overlap, print_density=true)
         !isnothing(GImp_i_old) && (GImp_i = α .* GImp_i .+ (1-α) .* GImp_i_old)
         ΣImp_i = Σ_from_GImp(G0W, GImp_i)
         println("     Calculating GLoc")
