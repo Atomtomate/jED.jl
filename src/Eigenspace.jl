@@ -50,7 +50,7 @@ function Eigenspace(model::Model, basis::Basis; verbose::Bool = true)
         for i in 1:length(tmp.values)
             evecs[first(slice)+i-1] = tmp.vectors[:,i]
         end
-        verbose && done = lpad(round(100*(el[1]+el[2])/length(basis.states), digits=1), 5, " ")
+        verbose && (done = lpad(round(100*(el[1]+el[2])/length(basis.states), digits=1), 5, " "))
         verbose && print("\rGenerating Eigenspace: $(done)% done.")
     end
     verbose && println("\rEigenspace generated!                  ")

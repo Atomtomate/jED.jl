@@ -3,6 +3,7 @@ using Distributed
 @everywhere using Pkg
 @everywhere Pkg.activate(@__DIR__)
 @everywhere using jED
+using JLD2
 
 
 @everywhere function DMFT_Loop(U::Float64, μ::Float64, β::Float64, kG::jED.KGrid; Nν::Int = 500, maxit::Int = 30)
@@ -73,4 +74,12 @@ function DMFT_grid!(param_grid::AbstractVector, res_p::AbstractVector, res_dens:
        end
         println("Submission of $(length(param_grid)) jobs over $(nprocs()) processors done!")
    end
+end
+
+DMFT_grid!(grid, res_p, res_dens)
+ 
+jldopen("results.jld2", "w", compress=true) do io
+    io["param_grid"] = collect(grid)
+    io["anderson_params"] = collect(res_p)
+    io["densities"] = collect(res_dens)
 end
