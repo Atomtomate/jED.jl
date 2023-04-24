@@ -1,5 +1,8 @@
-using jED
 using Documenter
+using Pkg
+Pkg.activate(String(@__DIR__) * "/..")
+using jED
+push!(LOAD_PATH, "../src")
 
 DocMeta.setdocmeta!(jED, :DocTestSetup, :(using jED); recursive=true)
 
