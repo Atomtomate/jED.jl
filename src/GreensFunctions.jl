@@ -78,7 +78,7 @@ Arguments
 - **`ϵ_cut`**   : Float64, cutoff for ``e^{-\\beta E_n}`` terms in Lehrmann representation (all contributions below this threshold are disregarded)
 - **`overlap`** : Overlap, precalculated overlap between blocks of basis. Obtained with [`Overlap`](@ref `Overlap`)
 """
-function calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{ComplexF64}, β::Float64; ϵ_cut::Float64=1e-16, overlap=nothing, print_density::Bool=false)
+function calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{ComplexF64}, β::Float64; ϵ_cut::Float64=1e-16, overlap=nothing, with_density::Bool=false)
     global to
 
     Z = calc_Z(es, β)
@@ -91,7 +91,7 @@ function calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{Complex
     else 
         overlap
     end
-    @timeit to "pf2" pf, nf, dens = overlap_EDiff(basis, es, overlap, β, ϵ_cut, with_density=print_density)
+    @timeit to "pf2" pf, nf, dens = overlap_EDiff(basis, es, overlap, β, ϵ_cut, with_density=with_density)
     @timeit to "for" for νi in eachindex(νnGrid)
         νn = νnGrid[νi]
         for j in 1:length(pf)
@@ -100,15 +100,21 @@ function calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{Complex
         end
     end
 
-    print_density && println("Density = ", 2*dens/Z)
-    return res 
+    #print_density && println("Density = ", 2*dens/Z)
+    return res, 2*dens/Z 
 end
 
 
 # ============================================ 2 Particle GF =========================================
 function lehmann_full(basis::Basis, es::Eigenspace, overlap::Overlap, β::Float64, ϵ_cut::Float64)
     bl = basis.blocklist
-    res_factor  = Stack{Float64}()
+    res_ov   = Stack{Float64}()
+    res_from = Stack{Float64}()
+    res_to   = Stack{Float64}()
+    res_ind_from = Stack{Int}()
+    res_ind_to = Stack{Int}()
+
+    expE        = exp.(-β .* es.evals)
     for (block_from, block_to) in enumerate(overlap.ov_blocks)
         if block_to > 0
             slice_from = _block_slice(bl[block_from])
@@ -117,14 +123,22 @@ function lehmann_full(basis::Basis, es::Eigenspace, overlap::Overlap, β::Float6
             block_to_start = bl[block_to][1] - 1
             for (i_from,ev_from) in enumerate(es.evecs[slice_from])
                 tmp = similar(ev_from)
+                ind_from = block_from_start + i_from
                 for (i_to,ev_to) in enumerate(es.evecs[slice_to])
-                    el_i = _overlap_cdagger_ev!(tmp, ev_from, ev_to, overlap.ov_list[slice_from])
-                    if abs(el_i) > ϵ_cut
-                        push!(res_factor, el_i)
-                    end
+                    ind_to   = block_to_start + i_to
+                    ov      = _overlap_cdagger_ev!(tmp, ev_from, ev_to, overlap.ov_list[slice_from])
+                    el_to   = expE[ind_from] 
+                    el_from = expE[ind_to]
+                    push!(res_ov, ov)
+                    push!(res_from, el_from)
+                    push!(res_to, el_to)
+                    push!(res_ind_from, ind_from)
+                    push!(res_ind_to, ind_to)
+                    # if abs(el_i) > ϵ_cut
+                    # end
                 end
             end
         end
     end
-    return collect(res_factor)
+    return collect(res_ov), collect(res_from), collect(res_to), collect(res_ind_from),  collect(res_ind_to)
 end

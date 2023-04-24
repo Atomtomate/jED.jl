@@ -35,13 +35,13 @@ end
 
 Constructs [`Eigenspace`](@ref Eigenspace) for [`Model`](@ref Model) over given [`Basis`](@ref Basis) by diagonalizing the Hamiltonian (see also [`calc_Hamiltonian`](@ref calc_Hamiltonian)) for each block.
 """
-function Eigenspace(model::Model, basis::Basis)
+function Eigenspace(model::Model, basis::Basis; verbose::Bool = true)
 
     EVecType = typeof(model).parameters[2]
     evals = Vector{Float64}(undef, length(basis.states))
     evecs = Vector{Vector{EVecType}}(undef, length(basis.states))
 
-    print("Generating Eigenspace:   0.0% done.")
+    verbose && print("Generating Eigenspace:   0.0% done.")
     for el in basis.blocklist
         slice = _block_slice(el)
         Hi = calc_Hamiltonian(model, basis.states[slice])
@@ -50,10 +50,10 @@ function Eigenspace(model::Model, basis::Basis)
         for i in 1:length(tmp.values)
             evecs[first(slice)+i-1] = tmp.vectors[:,i]
         end
-        done = lpad(round(100*(el[1]+el[2])/length(basis.states), digits=1), 5, " ")
-        print("\rGenerating Eigenspace: $(done)% done.")
+        verbose && done = lpad(round(100*(el[1]+el[2])/length(basis.states), digits=1), 5, " ")
+        verbose && print("\rGenerating Eigenspace: $(done)% done.")
     end
-    println("\rEigenspace generated!                  ")
+    verbose && println("\rEigenspace generated!                  ")
     E0 = minimum(evals)
     
     return Eigenspace{EVecType}(evals .- E0, evecs, E0)
