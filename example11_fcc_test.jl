@@ -64,6 +64,7 @@ res_dens = SharedVector{Float64}(length(grid))
         p, dens = DMFT_Loop(U, μ, β, kG, maxit = 1)
         res_p[i] = Tuple(vcat(p.ϵₖ,p.Vₖ))
         res_dens[i] = dens
+        println("$(100*i/length(my_indices)) % done")
     end
 end
 
