@@ -29,8 +29,8 @@ end
 
     for i in 1:maxit
         model  = AIM(ϵₖ, Vₖ, μ, U)
-        es     = Eigenspace(model, basis);
-        GImp_i = calc_GF_1(basis, es, νnGrid, β)
+        es     = Eigenspace(model, basis, verbose=false);
+        GImp_i, dens = calc_GF_1(basis, es, νnGrid, β)
         ΣImp_i = Σ_from_GImp(G0W, GImp_i)
 
         GLoc_i = GLoc(ΣImp_i, μ, νnGrid, kG)

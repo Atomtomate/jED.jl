@@ -31,7 +31,7 @@ function DMFT_solve_test(p_vec::Vector)::Float64
     G0W    = GWeiss(νnGrid, μ, p)
     es     = Eigenspace(model, basis);
     println("     Calculating GImp")
-    GImp_i = calc_GF_1(basis, es, νnGrid, β)
+    GImp_i, dens = calc_GF_1(basis, es, νnGrid, β)
     ΣImp_i = Σ_from_GImp(G0W, GImp_i)
     GLoc_i = GLoc(ΣImp_i, μ, νnGrid, kG)
     fit_AIM_params!(p, GLoc_i, μ, νnGrid)

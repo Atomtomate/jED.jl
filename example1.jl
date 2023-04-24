@@ -44,5 +44,5 @@ E = calc_E(es, β)
 println("E₀ = $(es.E0)\nZ  = $Z\nE  = $E")
 
 νnGrid = [1im * (2*n+1)*π/β for n in 0:10]
-GF = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=0.0)
-GF_approx = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=1e-8)
+GF, dens = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=0.0)
+GF_approx, dens = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=1e-8)
