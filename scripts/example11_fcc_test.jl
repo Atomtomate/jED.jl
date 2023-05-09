@@ -1,7 +1,7 @@
 using Distributed
 @everywhere using SharedArrays
 @everywhere using Pkg
-@everywhere Pkg.activate(@__DIR__)
+@everywhere Pkg.activate(joinpath(@__DIR__,".."))
 @everywhere using jED
 using JLD2
 

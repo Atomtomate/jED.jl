@@ -1,5 +1,5 @@
 using Pkg
-Pkg.activate(@__DIR__)
+Pkg.activate(joinpath(@__DIR__,".."))
 using jED
 using TimerOutputs
 to = TimerOutput()
@@ -11,7 +11,7 @@ function DMFT_Loop(U::Float64, μ::Float64, β::Float64; maxit = 20)
     Vₖ = [0.25, 0.35, 0.45, 0.55]
     p  = AIMParams(ϵₖ, Vₖ)
     tsc = 0.40824829046386307/2
-    Nν  = 2000
+    Nν  = 1000
     Nk  = 40
     α   = 0.4
     GImp_i = nothing
