@@ -79,7 +79,6 @@ function DMFT_Loop(U::Float64, μ::Float64, β::Float64, NBathSites::Int, KGridS
         println(" -> sum(Vₖ²) = $(sum(p.Vₖ .^ 2)) // Z = $Z")
         if ((sum(abs.(p_old.ϵₖ .- p.ϵₖ)) + sum(abs.(p_old.Vₖ .- p.Vₖ))) < abs_conv) || i >= maxit
             GImp_i, dens = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=ϵ_cut, overlap=overlap, with_density=true)
-            Z = calc_Z(es, β)
             done = true
         end
         i += 1
