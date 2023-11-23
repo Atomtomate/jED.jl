@@ -33,9 +33,9 @@ G0W    = GWeiss_from_Imp(GLoc_i, ΣImp_i)
 
 tmp = similar(GLoc_i.parent) 
 N =   length(ϵₖ)
-function objective(p::Vector)
+function objective(p::Vector; N::Int = 1)
     GWeiss!(tmp, νnGrid.parent, μ, p[1:N], p[N+1:end])
-    sum(abs.(tmp .- GLoc_i.parent))/length(tmp)
+    sum(abs.(tmp .- GLoc_i.parent))/(abs.(νnGrid.parent) .^ N)
 end
 function grad(∇f, x) 
     ∇f = FiniteDiff.finite_difference_gradient(objective,x)

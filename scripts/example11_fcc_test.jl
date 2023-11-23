@@ -32,8 +32,9 @@ using JLD2
         ΣImp_i = Σ_from_GImp(G0W, GImp_i)
         # println("     Calculating GLoc")
         GLoc_i = jED.GLoc(ΣImp_i, μ, νnGrid, kG)
-
+        p_old  = deepcopy(p)
         fit_AIM_params!(p, GLoc_i, μ, νnGrid)
+        all(vcat(p_old.ϵₖ,p_old.Vₖ) .≈ vcat(p.ϵₖ,p.Vₖ)) && break
         # println("Solution using Lsq:    ϵₖ = $(lpad.(round.(p.ϵₖ,digits=4),9)...)")
         # println("                       Vₖ = $(lpad.(round.(p.Vₖ,digits=4),9)...)")
         # println(" -> sum(Vₖ²) = $(sum(p.Vₖ .^ 2))")
@@ -44,16 +45,12 @@ end
 #p, dens = DMFT_Loop(1.0, 1.0, 1.0, kG, maxit = 1)
 
 
-# Urange = collect(1.0:0.5:10.0)
-# μrange = collect(0:0.02:1)
-# βrange = collect(1:0.5:20)
-Urange = collect(1.0:0.5:2.0)
-μrange = collect(0:0.5:1)
-βrange = collect(1:0.5:2)
+Urange = collect(1.0:0.5:10.0)
+μrange = collect(0:0.05:1.0)
+βrange = collect(20.5:0.5:30)
 grid = SharedVector(collect(Base.product(Urange, μrange, βrange))[:])
 res_p = SharedVector{NTuple{8,Float64}}(length(grid))
 res_dens = SharedVector{Float64}(length(grid))
-
 
 @everywhere function run_chunk!(param_grid::AbstractVector, res_p::AbstractVector, res_dens::AbstractVector)
     my_indices = localindices(param_grid)
