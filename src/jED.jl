@@ -22,7 +22,8 @@ export show_matrix_block
 export AIM, AIMParams
 
 # DMFT
-export Σ_from_GImp, GWeiss, GWeiss!, GWeiss_from_Δ, GWeiss_from_Imp, Δ_AIM, GLoc, fit_AIM_params!
+export Σ_from_GImp,
+    GWeiss, GWeiss!, GWeiss_from_Δ, GWeiss_from_Imp, Δ_AIM, GLoc, fit_AIM_params!
 
 to = TimerOutput()
 
