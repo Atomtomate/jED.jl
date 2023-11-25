@@ -81,7 +81,7 @@ Arguments
 function calc_GF_1(basis::Basis, es::Eigenspace{FPT}, νnGrid::AbstractVector, β::Float64; ϵ_cut::Float64=1e-16, overlap=nothing, with_density::Bool=false) where FPT <: Real
     global to
 
-    FPT !=== eltype(νnGrid) && println("Warning, element type of Eigenspace ($FPT) does not match element type of ν-Grid ($(eltype(νnGrid)))! Expect loss of precision.")
+    !(FPT === eltype(νnGrid) || Complex{FPT} === eltype(νnGrid)) && @warn "Element type of Eigenspace ($FPT) does not match element type of ν-Grid ($(eltype(νnGrid)))! Expect loss of precision."
 
     Z = calc_Z(es, β)
     res = similar(νnGrid)

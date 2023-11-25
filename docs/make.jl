@@ -14,7 +14,6 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://Atomtomate.github.io/jED.jl",
-        edit_link="master",
         assets=String[],
     ),
     pages=[
@@ -23,5 +22,8 @@ makedocs(;
 )
 
 deploydocs(;
+    branch="gh-pages",
+    devbranch = "master",
+    devurl = "stable",
     repo="github.com/Atomtomate/jED.jl.git"
 )

@@ -254,7 +254,7 @@ Computes ``\\langle \\text{EV}_j | c^\\dagger_k | \\text{EV}_i \\rangle`` where 
 
 This is an internal function used to compute the [`overlaps`](@ref overlap_cdagger).
 """
-function _overlap_cdagger_ev!(tmp::Vector{Float64}, vec1::Vector{Float64}, vec2::Vector{Float64}, perm::Vector{Int})::Float64
+function _overlap_cdagger_ev!(tmp::Vector{FPT}, vec1::Vector{FPT}, vec2::Vector{FPT}, perm::Vector{Int})::Float64 where FPT
     for (i,p) in enumerate(perm)
         if p == 0
             tmp[i] = 0

@@ -45,3 +45,18 @@ The second use case may improve stability for analytic continuation, such as [[N
 
 Since fitting of the parameters of the finite bath for the Anderson impurity model (the only one implemented for now) can be tricky, there are multiple examples in the `scripts` directory exploring different options.
 Make sure to test the conjugate gradient methods with different cost functions, instead of the default least squeres fit, in case of unphysical parameters.
+
+## Fortran compatibility
+
+The `fortran_compat.jl` script is a headless (HPC compatible) script, usable as drop in replacement for a well known Fortran77 ED code.
+
+Usage is explained as comments, it can be called from bash (e.g. slurm scripts) with:
+```
+/PATH/TO/JULIA/BIN/julia /PATH/TO/SCRIPT_DIR/fortran_compat.jl 1.1 1.2 1.3 10 3dsc-1.1-1.2-1.3 /PATH/TO/OUTPUT_DIR
+```
+
+Where `U = 1.1`, `beta = 1.2`, `mu = 1.3`, `Nk = 10` and lattice type 3D simple cubic with `t=1.1`, `t'=1.2`, `t''=1.3`.
+See [[Dispersions.jl]](https://github.com/Atomtomate/Dispersions.jl) for available tight binding models!
+
+For now, the number of Fermionic frequencies, maximum number of iterations and convergence epsilon are 'hardcoded' inside the script. 
+If necessary, those can be either changed in palce, or made available to the bash script as parameter, by parsing mor `ARGS` parameters from the command line.

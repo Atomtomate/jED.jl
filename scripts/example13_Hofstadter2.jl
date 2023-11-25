@@ -30,7 +30,6 @@ function DMFT_Loop(;maxit = 20)
 
     for i in 1:maxit
         println("    ========== ITERATION $(rpad(i,3)) ==========    ")
-
         model  = AIM(p.ϵₖ, p.Vₖ, μ, U)
         G0W    = GWeiss(νnGrid, μ, p)
         es     = Eigenspace(model, basis);
@@ -40,8 +39,6 @@ function DMFT_Loop(;maxit = 20)
         !isnothing(GImp_i_old) && (GImp_i = α .* GImp_i .+ (1-α) .* GImp_i_old)
         ΣImp_i = Σ_from_GImp(G0W, GImp_i)
         println("     Calculating GLoc")
-        #@timeit to "GLoc" GLoc_i_old = jED.GLoc_MO_old(ΣImp_i, μ, νnGrid, kG)
-        #@timeit to "GLoc old2" GLoc_i_old = jED.GLoc_MO_old2(ΣImp_i, μ, νnGrid, kG)
         @timeit to "GLoc new" GLoc_i = jED.GLoc_MO(ΣImp_i, μ, νnGrid, kG)
 
 
@@ -54,7 +51,8 @@ function DMFT_Loop(;maxit = 20)
     return p, νnGrid, GImp_i, GLoc_i, GLoc_i_old, ΣImp_i
 end
 
-p, νnGrid, GImp, GLoc, GLoc_old, ΣImp = DMFT_Loop(maxit = 3)
+p, νnGrid, GImp_res, GLoc_res, GLoc_old, ΣImp = DMFT_Loop(maxit = 3)
+
 
 # open("gm_wim", "w") do io
 #     res = map(x -> rpad.(@sprintf("%0.12f",x), 20), [imag(νnGrid) real(GImp) imag(GImp)])

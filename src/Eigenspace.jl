@@ -45,7 +45,7 @@ function Eigenspace(model::Model, basis::Basis; verbose::Bool = true, FPT::Type{
     for el in basis.blocklist
         slice = _block_slice(el)
         Hi = calc_Hamiltonian(model, basis.states[slice]; FPT=FPT)
-        tmp = eigen(Hi, sortby=nothing)
+        tmp = eigen(Hi)
         evals[slice] .= tmp.values
         for i in 1:length(tmp.values)
             evecs[first(slice)+i-1] = tmp.vectors[:,i]

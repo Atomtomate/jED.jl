@@ -59,7 +59,10 @@ struct AIM{NSites, T} <: Model
     params::AIMParams
     μ::Float64
     U::Float64
-    function AIM(ϵₖ::Vector{Float64}, Vₖ::Vector{T}, μ::Float64, U::Float64) where T <: Real
+
+    AIM(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Float64, U::Float64) = AIM{eltype(Vₖ)}(ϵₖ, Vₖ, μ, U)
+
+    function AIM{T}(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Float64, U::Float64) where T
         length(ϵₖ) != length(Vₖ) && throw(ArgumentError("length of ϵₖ $(length(ϵₖ)) must be equal to length of Vₖ $(length(Vₖ))!"))
             NSites = length(ϵₖ) + 1
             tMatrix = collect(Diagonal(cat(T[-μ], ϵₖ ,dims=1)))
