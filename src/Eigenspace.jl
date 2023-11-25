@@ -25,26 +25,26 @@ Fields
 - **`evecs`**     : Eigenvectors
 - **`E0`**        : smallest Eigenvalue
 """
-struct Eigenspace{T}
-    evals::Vector{Float64}
-    evecs::Vector{Vector{T}}
-    E0::Float64
+struct Eigenspace{FPT <: Real}
+    evals::Vector{FPT}
+    evecs::Vector{Vector{FPT}}
+    E0::FPT
 end
 
 """
 
 Constructs [`Eigenspace`](@ref Eigenspace) for [`Model`](@ref Model) over given [`Basis`](@ref Basis) by diagonalizing the Hamiltonian (see also [`calc_Hamiltonian`](@ref calc_Hamiltonian)) for each block.
 """
-function Eigenspace(model::Model, basis::Basis; verbose::Bool = true)
+function Eigenspace(model::Model, basis::Basis; verbose::Bool = true, FPT::Type{FPTi}=eltype(model.tMatrix)) where FPTi <: Real
 
     EVecType = typeof(model).parameters[2]
-    evals = Vector{Float64}(undef, length(basis.states))
+    evals = Vector{FPT}(undef, length(basis.states))
     evecs = Vector{Vector{EVecType}}(undef, length(basis.states))
 
     verbose && print("Generating Eigenspace:   0.0% done.")
     for el in basis.blocklist
         slice = _block_slice(el)
-        Hi = calc_Hamiltonian(model, basis.states[slice])
+        Hi = calc_Hamiltonian(model, basis.states[slice]; FPT=FPT)
         tmp = eigen(Hi, sortby=nothing)
         evals[slice] .= tmp.values
         for i in 1:length(tmp.values)
@@ -95,10 +95,9 @@ Calculates the Hamiltonian for a given
   - `model`, see for example [`AIM`](@ref AIM))) in a 
   - `basis`, see [`Basis`](@ref Basis)  
 """
-function calc_Hamiltonian(model::Model, states::Vector{Fockstate{NSites}}) where NSites
+function calc_Hamiltonian(model::Model, states::Vector{Fockstate{NSites}}; FPT::Type{FPTi}=eltype(model.tMatrix)) where {NSites, FPTi <: Real}
     Hsize = length(states)
-    T = eltype(model.tMatrix)
-    H_int = Matrix{T}(undef, Hsize, Hsize)
+    H_int = Matrix{FPT}(undef, Hsize, Hsize)
     for i in 1:Hsize
         H_int[i,i] = _H_nn(states[i], states[i], model.UMatrix) + _H_CDagC(states[i], states[i], model.tMatrix)
         # We are generating a Hermitian/Symmetric matrix and only need to store the upper triangular part
@@ -107,7 +106,7 @@ function calc_Hamiltonian(model::Model, states::Vector{Fockstate{NSites}}) where
             H_int[i,j] = val
         end
     end
-    return T === ComplexF64 ? Hermitian(H_int, :U) : Symmetric(H_int, :U)
+    return FPT isa Real ?  Symmetric(H_int, :U) : Hermitian(H_int, :U) 
 end
 
 calc_Hamiltonian(model::Model, basis::Basis) = calc_Hamiltonian(model, basis.states) 

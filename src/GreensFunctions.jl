@@ -34,10 +34,10 @@ struct Overlap
 end
 
 # ============================================ 1 Particle GF =========================================
-function overlap_EDiff(basis::Basis, es::Eigenspace, overlap::Overlap, β::Float64, ϵ_cut::Float64; with_density::Bool=false)
+function overlap_EDiff(basis::Basis, es::Eigenspace{FPT}, overlap::Overlap, β::Float64, ϵ_cut::Float64; with_density::Bool=false) where FPT <: Real
     bl = basis.blocklist
-    res_EDiff   = Stack{Float64}()
-    res_factor  = Stack{Float64}()
+    res_EDiff   = Stack{FPT}()
+    res_factor  = Stack{FPT}()
     expE        = exp.(-β .* es.evals)
     dens        = 0.0
     #TODO: exclude underflow here already
@@ -78,8 +78,10 @@ Arguments
 - **`ϵ_cut`**   : Float64, cutoff for ``e^{-\\beta E_n}`` terms in Lehrmann representation (all contributions below this threshold are disregarded)
 - **`overlap`** : Overlap, precalculated overlap between blocks of basis. Obtained with [`Overlap`](@ref `Overlap`)
 """
-function calc_GF_1(basis::Basis, es::Eigenspace, νnGrid::AbstractVector{ComplexF64}, β::Float64; ϵ_cut::Float64=1e-16, overlap=nothing, with_density::Bool=false)
+function calc_GF_1(basis::Basis, es::Eigenspace{FPT}, νnGrid::AbstractVector, β::Float64; ϵ_cut::Float64=1e-16, overlap=nothing, with_density::Bool=false) where FPT <: Real
     global to
+
+    FPT !=== eltype(νnGrid) && println("Warning, element type of Eigenspace ($FPT) does not match element type of ν-Grid ($(eltype(νnGrid)))! Expect loss of precision.")
 
     Z = calc_Z(es, β)
     res = similar(νnGrid)
@@ -106,11 +108,11 @@ end
 
 
 # ============================================ 2 Particle GF =========================================
-function lehmann_full(basis::Basis, es::Eigenspace, overlap::Overlap, β::Float64, ϵ_cut::Float64)
+function lehmann_full(basis::Basis, es::Eigenspace{FPT}, overlap::Overlap, β::Float64, ϵ_cut::Float64) where FPT <: Real
     bl = basis.blocklist
-    res_ov   = Stack{Float64}()
-    res_from = Stack{Float64}()
-    res_to   = Stack{Float64}()
+    res_ov   = Stack{FPT}()
+    res_from = Stack{FPT}()
+    res_to   = Stack{FPT}()
     res_ind_from = Stack{Int}()
     res_ind_to = Stack{Int}()
 

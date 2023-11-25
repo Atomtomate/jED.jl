@@ -35,3 +35,13 @@ In order to run the example follow these steps:
 
 You can now also inspect all quantities, such as the basis, model, eigenspace and so on.
 Further documentation is available [[here]](https://Atomtomate.github.io/jED.jl/dev/).
+
+## High precision and special models
+
+There are multiple examples in the scripts directory, showing the use of different models (such as the Hofstadter model) and the use of higher precision.
+The second use case may improve stability for analytic continuation, such as [[Nevanlinna]](https://github.com/SpM-lab/Nevanlinna.jl).
+
+## Anderson parameters fitting procedure
+
+Since fitting of the parameters of the finite bath for the Anderson impurity model (the only one implemented for now) can be tricky, there are multiple examples in the `scripts` directory exploring different options.
+Make sure to test the conjugate gradient methods with different cost functions, instead of the default least squeres fit, in case of unphysical parameters.

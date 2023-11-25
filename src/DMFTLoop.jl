@@ -8,8 +8,8 @@
 #   This is only a stub, needs to be properly wrapped in types
 # ==================================================================================================== #
 
-const FermionicMatsubaraGrid = OffsetVector{ComplexF64, Vector{ComplexF64}}
-const MatsubaraF = OffsetVector{ComplexF64, Vector{ComplexF64}}
+const FermionicMatsubaraGrid = OffsetVector{Complex{FPT}, Vector{Complex{FPT}}} where FPT <: Real
+const MatsubaraF = OffsetVector{Complex{FPT}, Vector{Complex{FPT}}} where FPT <: Real
 
 """
     Σ_from_GImp(GWeiss::OffsetVector{ComplexF64, Vector{ComplexF64}}, GImp::OffsetVector{ComplexF64, Vector{ComplexF64}})

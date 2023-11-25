@@ -9,6 +9,7 @@ using TOML
 using LsqFit
 # using KrylovKit
 using Dispersions
+using MultiFloats, GenericLinearAlgebra
 
 export Fockstate, Basis, Overlap, Operator, create, ann, create_op, ann_op
 export Eigenspace, calc_Hamiltonian

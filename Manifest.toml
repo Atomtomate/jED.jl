@@ -2,7 +2,7 @@
 
 julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "1fb0205ed39bfe146a93c1a1805ecaebe20a57ed"
+project_hash = "316107f683b208fab2c97f25f3599ccb332dc443"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -323,6 +323,12 @@ weakdeps = ["StaticArrays"]
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
+[[deps.GenericLinearAlgebra]]
+deps = ["LinearAlgebra", "Printf", "Random", "libblastrampoline_jll"]
+git-tree-sha1 = "02be7066f936af6b04669f7c370a31af9036c440"
+uuid = "14197337-ba66-59df-a3e3-ca00e7dcff7a"
+version = "0.3.11"
+
 [[deps.Gumbo]]
 deps = ["AbstractTrees", "Gumbo_jll", "Libdl"]
 git-tree-sha1 = "a1a138dfbf9df5bace489c7a9d5196d6afdfa140"
@@ -503,6 +509,12 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 version = "2022.10.11"
+
+[[deps.MultiFloats]]
+deps = ["LinearAlgebra", "Printf", "Random"]
+git-tree-sha1 = "4d047875ab0571dbec7e7348ff3d2b09edace3aa"
+uuid = "bdf0d083-296b-4888-a5b6-7498122e68a5"
+version = "1.0.4"
 
 [[deps.NLSolversBase]]
 deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
