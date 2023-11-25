@@ -16,6 +16,7 @@ makedocs(;
         assets = String[],
     ),
     pages = ["Home" => "index.md"],
+    warnonly = Documenter.except(),
 )
 
 deploydocs(;

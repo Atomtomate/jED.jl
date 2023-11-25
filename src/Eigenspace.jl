@@ -32,8 +32,9 @@ struct Eigenspace{FPT<:Real}
 end
 
 """
+    Eigenspace(model::Model, basis::Basis; verbose::Bool = true, FPT::Type{FPTi} = eltype(model.tMatrix))
 
-Constructs [`Eigenspace`](@ref Eigenspace) for [`Model`](@ref Model) over given [`Basis`](@ref Basis) by diagonalizing the Hamiltonian (see also [`calc_Hamiltonian`](@ref calc_Hamiltonian)) for each block.
+Constructs the Eigenspace for [`Model`](@ref Model) over given [`Basis`](@ref Basis) by diagonalizing the Hamiltonian (see also [`calc_Hamiltonian`](@ref calc_Hamiltonian)) for each block.
 """
 function Eigenspace(
     model::Model,
@@ -67,7 +68,7 @@ function Eigenspace(
     verbose && println("\rEigenspace generated!                  ")
     E0 = minimum(evals)
 
-    return Eigenspace{EVecType}(evals .- E0, evecs, E0)
+    return Eigenspace{FPT}(evals .- E0, evecs, E0)
 end
 
 function Eigenspace_L(model::Model, basis::Basis)

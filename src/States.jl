@@ -43,6 +43,11 @@ struct Basis{Length}
     blocklist::Vector{Blockinfo}
 end
 
+"""
+    Basis(NSites::Int; NFlavors::Int = 2)
+
+Contructs a Fock basis for `NSites` with `NFlavors`.
+"""
 function Basis(NSites::Int; NFlavors::Int = 2)
     Length = NFlavors * NSites
     states = Vector{Fockstate{Length}}(undef, 4^NSites)
