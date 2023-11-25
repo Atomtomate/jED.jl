@@ -4,7 +4,7 @@ using jED
 using TimerOutputs
 to = TimerOutput()
 
-FPT = jED.Float64
+FPT = jED.Float64x2
 
 println("NOT using cutoff for GF overlaps, this is very slow!")
 println("Calculating impurity density on each iteration, this is very slow!")

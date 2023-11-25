@@ -23,7 +23,7 @@ export AIM, AIMParams
 
 # DMFT
 export Σ_from_GImp,
-    GWeiss, GWeiss!, GWeiss_from_Δ, GWeiss_from_Imp, Δ_AIM, GLoc, fit_AIM_params!
+    GWeiss, GWeiss!, GWeiss_from_Δ, GWeiss_from_Imp, Δ_AIM, GLoc, GLoc_MO, fit_AIM_params!
 
 to = TimerOutput()
 
