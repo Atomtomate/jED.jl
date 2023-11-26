@@ -57,27 +57,63 @@ function overlap_EDiff(
             for (i_from, ev_from) in enumerate(es.evecs[slice_from])
                 tmp = similar(ev_from)
                 for (i_to, ev_to) in enumerate(es.evecs[slice_to])
-                    ov =
-                        _overlap_cdagger_ev!(
-                            tmp,
-                            ev_from,
-                            ev_to,
-                            overlap.ov_list[slice_from],
-                        )^2
+                    ov = _overlap_cdagger_ev!(tmp, ev_from, ev_to, overlap.ov_list[slice_from])^2
                     el_i = (expE[block_from_start+i_from] + expE[block_to_start+i_to]) * ov
                     with_density && (dens += ov * expE[block_to_start+i_to])#expE[block_from_start + i_from])
                     if abs(el_i) > ϵ_cut
                         push!(res_factor, el_i)
-                        push!(
-                            res_EDiff,
-                            es.evals[slice_from][i_from] - es.evals[slice_to][i_to],
-                        )
+                        push!(res_EDiff, es.evals[slice_from][i_from] - es.evals[slice_to][i_to])
                     end
                 end
             end
         end
     end
     return collect(res_factor), collect(res_EDiff), dens
+end
+
+@Base.assume_effects :total function GF_element(pf::Float64, nf::Float64, νn::ComplexF64)::ComplexF64
+    return pf / (νn + nf)
+end
+
+function calc_GF_1_inplace(
+    basis::Basis,
+    es::Eigenspace{FPT},
+    νnGrid::AbstractVector{ComplexF64},
+    β::Float64,
+    overlap::Overlap,
+    ϵ_cut::Float64;
+    with_density::Bool = false,
+) where {FPT<:Real}
+    bl = basis.blocklist
+    res = zeros(Complex{FPT}, length(νnGrid))
+    expE = exp.(-β .* es.evals)
+    dens = 0.0
+    Z = calc_Z(es, β)
+
+    #TODO: exclude underflow here already
+    for (block_from, block_to) in enumerate(overlap.ov_blocks)
+        if block_to > 0
+            slice_from = _block_slice(bl[block_from])
+            slice_to = _block_slice(bl[block_to])
+            block_from_start = bl[block_from][1] - 1
+            block_to_start = bl[block_to][1] - 1
+            for (i_from, ev_from) in enumerate(es.evecs[slice_from])
+                tmp = similar(ev_from)
+                for (i_to, ev_to) in enumerate(es.evecs[slice_to])
+                    ov = _overlap_cdagger_ev!(tmp, ev_from, ev_to, overlap.ov_list[slice_from])^2
+                    el_i = (expE[block_from_start+i_from] + expE[block_to_start+i_to]) * ov
+                    with_density && (dens += ov * expE[block_to_start+i_to])#expE[block_from_start + i_from])
+                    if abs(el_i) > ϵ_cut
+                        ΔE = es.evals[slice_from][i_from] - es.evals[slice_to][i_to]
+                        for (νi,νn) in enumerate(νnGrid)
+                            res[νi] += GF_element(el_i, ΔE, νn)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return res ./ Z, 2 * dens / Z
 end
 
 """
@@ -118,9 +154,8 @@ function calc_GF_1(
     else
         overlap
     end
-    @timeit to "pf2" pf, nf, dens =
-        overlap_EDiff(basis, es, overlap, β, ϵ_cut, with_density = with_density)
-    @timeit to "for" for νi in eachindex(νnGrid)
+    pf, nf, dens = overlap_EDiff(basis, es, overlap, β, ϵ_cut, with_density = with_density)
+     for νi in eachindex(νnGrid)
         νn = νnGrid[νi]
         for j = 1:length(pf)
             #TODO: reduce memory allocation overhead
@@ -128,7 +163,6 @@ function calc_GF_1(
         end
     end
 
-    #print_density && println("Density = ", 2*dens/Z)
     return res, 2 * dens / Z
 end
 

@@ -44,7 +44,13 @@ The second use case may improve stability for analytic continuation, such as [[N
 ## Anderson parameters fitting procedure
 
 Since fitting of the parameters of the finite bath for the Anderson impurity model (the only one implemented for now) can be tricky, there are multiple examples in the `scripts` directory exploring different options.
-Make sure to test the conjugate gradient methods with different cost functions, instead of the default least squeres fit, in case of unphysical parameters.
+
+There are two different example script for parameter fitting: 
+    
+- In `scripts/example3` and `script/example4` you can find examples for tests with different cost functions
+
+- In `scripts/example16` you can find an example for a global optimum search based on [`NLopt`](https://nlopt.readthedocs.io/en/latest/). This can be especially usefull for the first iterations of calculations with a high number of bath sites.
+
 
 ## Fortran compatibility
 
@@ -60,3 +66,8 @@ See [[Dispersions.jl]](https://github.com/Atomtomate/Dispersions.jl) for availab
 
 For now, the number of Fermionic frequencies, maximum number of iterations and convergence epsilon are 'hardcoded' inside the script. 
 If necessary, those can be either changed in palce, or made available to the bash script as parameter, by parsing mor `ARGS` parameters from the command line.
+
+## Performace
+
+This code is written with readability as main goal in order to demonstrate the ED algorithm.
+However, if you decide to run this code for larger scale models, see `example15` in the `scripts` directory for hints to improve performance slightly.
