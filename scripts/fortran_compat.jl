@@ -43,9 +43,12 @@ Returns:
 """
 function DMFT_Loop(U::Float64, μ::Float64, β::Float64, NBathSites::Int, KGridStr::String; 
                    Nk::Int=60, Nν::Int=1000, α::Float64=0.7, abs_conv::Float64=1e-8, ϵ_cut::Float64=1e-12, maxit::Int=20)
-    ϵₖ = [iseven(NBathSites) || i != ceil(Int, NBathSites/2) ? U/(i-NBathSites/2-1/2) : 0 for i in 1:NBathSites]
+    ϵₖ = [iseven(NBathSites) || i != ceil(Int, NBathSites/2) ? (U/2)/(i-NBathSites/2-1/2) : 0 for i in 1:NBathSites]
     Vₖ = [1/(4*NBathSites) for i in 1:NBathSites]
     p  = AIMParams(ϵₖ, Vₖ)
+    println(" ======== U = $U / μ = $μ / β = $β / NB = $(length(ϵₖ)) / INIT ======== ")
+    println("Solution using Lsq:    ϵₖ = $(lpad.(round.(p.ϵₖ,digits=4),9)...)")
+    println("                       Vₖ = $(lpad.(round.(p.Vₖ,digits=4),9)...)")
     GImp_i = nothing
     GImp_i_old = nothing
     ΣImp_i = nothing
@@ -79,6 +82,7 @@ function DMFT_Loop(U::Float64, μ::Float64, β::Float64, NBathSites::Int, KGridS
         println(" -> sum(Vₖ²) = $(sum(p.Vₖ .^ 2)) // Z = $Z")
         if ((sum(abs.(p_old.ϵₖ .- p.ϵₖ)) + sum(abs.(p_old.Vₖ .- p.Vₖ))) < abs_conv) || i >= maxit
             GImp_i, dens = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=ϵ_cut, overlap=overlap, with_density=true)
+            Z = calc_Z(es, β)
             done = true
         end
         i += 1

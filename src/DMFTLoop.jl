@@ -119,7 +119,7 @@ end
 """
     GLoc(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
 
-Compute local Green's function ``\\int dk [i\\nu_n + \\mu - \\epsilon_k - \\Sigma_\\text{Imp}(i\\nu_n)]^{-1}``.
+Compute local Green's function ``\\int dk [i\\nu_n + \\mu + \\epsilon_k - \\Sigma_\\text{Imp}(i\\nu_n)]^{-1}``.
 TODO: simplify -conj!!!
 """
 function GLoc(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
