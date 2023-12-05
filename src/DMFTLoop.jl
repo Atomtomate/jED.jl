@@ -8,13 +8,13 @@
 #   This is only a stub, needs to be properly wrapped in types
 # ==================================================================================================== #
 
-const FermionicMatsubaraGrid = OffsetVector{ComplexF64, Vector{ComplexF64}}
-const MatsubaraF = OffsetVector{ComplexF64, Vector{ComplexF64}}
+const FermionicMatsubaraGrid = OffsetVector{Complex{FPT}} where {FPT<:Real}
+const MatsubaraF = OffsetVector{Complex{FPT}} where {FPT<:Real}
 
 """
     Σ_from_GImp(GWeiss::OffsetVector{ComplexF64, Vector{ComplexF64}}, GImp::OffsetVector{ComplexF64, Vector{ComplexF64}})
 
-Computes self-energy from impurity Green's function (as obtained from a given impurity solver) and the [`Weiss Greens Function`](@ref GWeiss_from_Δ).
+Computes self-energy from impurity Green's function (as obtained from a given impurity solver) and the [`Weiss Greens Function`](@ref GWeiss).
 """
 function Σ_from_GImp(GWeiss::MatsubaraF, GImp::MatsubaraF)
     return 1 ./ GWeiss .- 1 ./ GImp
@@ -22,7 +22,7 @@ end
 
 
 """
-    GWeiss_from_Δ(Δ::OffsetVector{ComplexF64, Vector{ComplexF64}}, μ::Float64, νnGrid::FermionicMatsubaraGrid)
+    GWeiss(Δ::OffsetVector{ComplexF64, Vector{ComplexF64}}, μ::Float64, νnGrid::FermionicMatsubaraGrid)
 
 Computes Weiss Green's frunction from [`hybridization function`](@ref Δ_AIM).
 """
@@ -43,8 +43,9 @@ function GWeiss(νnGrid::FermionicMatsubaraGrid, μ::Float64, p::AIMParams)
 end
 
 function GWeiss!(target::Vector, νnGrid::Vector, μ::Float64, ϵₖ::Vector, Vₖ::Vector)
-    length(target) != length(νnGrid) && error("νnGrid and target must have the same length!")
-    for i in 1:length(νnGrid)
+    length(target) != length(νnGrid) &&
+        error("νnGrid and target must have the same length!")
+    for i = 1:length(νnGrid)
         target[i] = 1 / (νnGrid[i] + μ - sum((Vₖ .^ 2) ./ (νnGrid[i] .- ϵₖ)))
     end
 end
@@ -65,13 +66,14 @@ end
 Computes hybridization function ``\\sum_p \\frac{V_p^2}{i\\nu_n - \\epsilon_p}`` from [`Anderson Impurity Model Parameters`](@ref AIMParams) with ``p`` bath sites.
 """
 function Δ_AIM(νnGrid::FermionicMatsubaraGrid, p::AIMParams)
-    return OffsetVector(Δ_AIM(νnGrid.parent, vcat(p.ϵₖ, p.Vₖ)),eachindex(νnGrid))
+    return OffsetVector(Δ_AIM(νnGrid.parent, vcat(p.ϵₖ, p.Vₖ)), eachindex(νnGrid))
 end
 
 function Δ_AIM(νnGrid::Vector{ComplexF64}, p::Vector{Float64})
     Δ = similar(νnGrid)
-    N::Int = floor(Int, length(p)/2)
-    Δint(νn::ComplexF64, p::Vector{Float64})::ComplexF64 = conj(sum(p[(N+1):end] .^ 2 ./ (νn .- p[1:N])))
+    N::Int = floor(Int, length(p) / 2)
+    Δint(νn::ComplexF64, p::Vector{Float64})::ComplexF64 =
+        conj(sum(p[(N+1):end] .^ 2 ./ (νn .- p[1:N])))
     for νi in eachindex(νnGrid)
         Δ[νi] = Δint(νnGrid[νi], p)
     end
@@ -80,8 +82,9 @@ end
 
 function Δ_AIM_real(νnGrid::Vector{ComplexF64}, p::Vector{Float64})
     Δ = similar(νnGrid)
-    N::Int = floor(Int, length(p)/2)
-    Δint(νn::ComplexF64, p::Vector{Float64})::ComplexF64 = conj(sum(p[(N+1):end] .^ 2 ./ (νn .- p[1:N])))
+    N::Int = floor(Int, length(p) / 2)
+    Δint(νn::ComplexF64, p::Vector{Float64})::ComplexF64 =
+        conj(sum(p[(N+1):end] .^ 2 ./ (νn .- p[1:N])))
     for νi in eachindex(νnGrid)
         Δ[νi] = Δint(νnGrid[νi], p)
     end
@@ -98,7 +101,12 @@ function Δ_from_GWeiss(GWeiss::MatsubaraF, μ::Float64, νnGrid::FermionicMatsu
     return νnGrid .- μ .- 1 ./ GWeiss
 end
 
-function GLoc_MO_old2(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
+function GLoc_MO_old2(
+    ΣImp::MatsubaraF,
+    μ::Float64,
+    νnGrid::FermionicMatsubaraGrid,
+    kG::KGrid,
+)
     @assert length(νnGrid) <= length(ΣImp)
     GLoc = zero(ΣImp)
     tmp = dispersion(kG)
@@ -107,7 +115,7 @@ function GLoc_MO_old2(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubar
     for (ki, kMult) in enumerate(kG.kMult)
         for νi in eachindex(νnGrid)
             νn = νnGrid[νi]
-            @inbounds GLoc[νi] += kMult*(((μ .+ νn - ΣImp[νi])*I + tmp[:,:,ki])\I)[iOrb,iOrb]
+            @inbounds GLoc[νi] += kMult * (((μ.+νn-ΣImp[νi])*I+tmp[:, :, ki])\I)[iOrb, iOrb]
         end
     end
     GLoc = GLoc ./ Nk(kG)
@@ -124,7 +132,7 @@ TODO: simplify -conj!!!
 """
 function GLoc(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
     GLoc = similar(ΣImp)
-    tmp  = μ .+ dispersion(kG)
+    tmp = μ .+ dispersion(kG)
 
     # TODO: this is only here for testing purposes! Remove and implement multi-orbital case
     if typeof(kG).parameters[1] <: Hofstadter
@@ -139,19 +147,24 @@ function GLoc(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, k
 end
 
 #TODO: stub for multi-orbital GLoc, atm selecting 1,1 instead of returning full GLoc
-function GLoc_MO_old(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
+function GLoc_MO_old(
+    ΣImp::MatsubaraF,
+    μ::Float64,
+    νnGrid::FermionicMatsubaraGrid,
+    kG::KGrid,
+)
     @assert length(νnGrid) <= length(ΣImp)
     GLoc = similar(ΣImp)
     tmp = dispersion(kG)
 
-    tmp2::Vector{ComplexF64} = Vector{eltype(tmp)}(undef, size(tmp,3))
+    tmp2::Vector{ComplexF64} = Vector{eltype(tmp)}(undef, size(tmp, 3))
     tmp3::Matrix{ComplexF64} = Matrix{ComplexF64}(undef, size(tmp)[1:2]...)
     iOrb::Int = 1
     for νi in eachindex(νnGrid)
         νn = νnGrid[νi]
-        for ki in 1:size(tmp,3)
-            tmp3[:,:] = collect((μ .+ νn - ΣImp[νi])*I + tmp[:,:,ki])
-            tmp2[ki] = inv(tmp3)[iOrb,iOrb]
+        for ki = 1:size(tmp, 3)
+            tmp3[:, :] = collect((μ .+ νn - ΣImp[νi]) * I + tmp[:, :, ki])
+            tmp2[ki] = inv(tmp3)[iOrb, iOrb]
         end
         GLoc[νi] = kintegrate(kG, tmp2)
     end
@@ -163,20 +176,20 @@ end
 function GLoc_MO(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid, kG::KGrid)
     @assert length(νnGrid) <= length(ΣImp)
     GLoc = zero(ΣImp)
-    tmp  = convert.(ComplexF64, dispersion(kG))
+    tmp = convert.(ComplexF64, dispersion(kG))
 
     #tmp2::Vector{ComplexF64} = Vector{eltype(tmp)}(undef, length(νnGrid))
     iOrb::Int = 1
-    rhs_bak::Matrix{ComplexF64} = collect(Diagonal(ones(ComplexF64, size(tmp,1))))
-    rhs::Matrix{ComplexF64} = collect(Diagonal(ones(ComplexF64, size(tmp,1))))
+    rhs_bak::Matrix{ComplexF64} = collect(Diagonal(ones(ComplexF64, size(tmp, 1))))
+    rhs::Matrix{ComplexF64} = collect(Diagonal(ones(ComplexF64, size(tmp, 1))))
     for (ki, kMult) in enumerate(kG.kMult)
-        _, F = hessenberg(tmp[:,:,ki])
+        _, F = hessenberg(tmp[:, :, ki])
         for νi in eachindex(νnGrid)
             @inbounds copyto!(rhs, rhs_bak)
             @inbounds val = (μ + νnGrid[νi] - ΣImp[νi])
             # @timeit to "tmp3_1" ldiv!(F, I, shift=val)
-            @inbounds ldiv!(F, rhs, shift=val)
-            @inbounds GLoc[νi] += kMult * rhs[iOrb,iOrb]
+            @inbounds ldiv!(F, rhs, shift = val)
+            @inbounds GLoc[νi] += kMult * rhs[iOrb, iOrb]
             #@timeit to "tmp3_3" GLoc[νi] += kMult * ((F + val*I)\I)[iOrb,iOrb]
             # @timeit to "tmp3_1" copyto!(tmp3, tmp[:,:,ki])
             # @timeit to "tmp3_2" for i in 1:size(tmp3,1)
@@ -196,27 +209,32 @@ function GLoc_MO(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid
     return GLoc
 end
 
-function fit_AIM_params!(p::AIMParams, GLoc::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid)
+function fit_AIM_params!(
+    p::AIMParams,
+    GLoc::MatsubaraF,
+    μ::Float64,
+    νnGrid::FermionicMatsubaraGrid,
+)
 
     tmp = similar(νnGrid.parent)
-    p0  = vcat(p.ϵₖ, p.Vₖ)
-    N::Int = floor(Int, length(p0)/2)
+    p0 = vcat(p.ϵₖ, p.Vₖ)
+    N::Int = floor(Int, length(p0) / 2)
 
-    function GW_fit_real(νnGrid::Vector, p::Vector)::Vector{Float64} 
+    function GW_fit_real(νnGrid::Vector, p::Vector)::Vector{Float64}
         GWeiss!(tmp, νnGrid, μ, p[1:N], p[(N+1):end])
         vcat(real(tmp), imag(tmp))
     end
 
-    target = vcat(real(GLoc.parent),imag(GLoc.parent))
+    target = vcat(real(GLoc.parent), imag(GLoc.parent))
     fit = curve_fit(GW_fit_real, νnGrid.parent, target, p0)
     p.ϵₖ[:] = fit.param[1:N]
     p.Vₖ[:] = fit.param[N+1:end]
 end
 
 function model_ED(iν::Vector, p::Vector)
-    Δ_fit = zeros(ComplexF64,length(iν))
-    for (i,νn) in enumerate(iν)
-        tmp  = sum((p[(N+1):end] .^ 2) ./ (νn .- p[1:N]))
+    Δ_fit = zeros(ComplexF64, length(iν))
+    for (i, νn) in enumerate(iν)
+        tmp = sum((p[(N+1):end] .^ 2) ./ (νn .- p[1:N]))
         Δ_fit[i] = tmp
     end
     return conj.(Δ_fit)

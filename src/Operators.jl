@@ -33,7 +33,7 @@ struct Operator
 end
 
 (op::Operator)(s::Fockstate) = op.f(s)
-    
+
 
 # ============================================= Operators ============================================
 
@@ -61,11 +61,11 @@ Returns either a new [`Fockstate`](@ref Fockstate) with an electron `i` created 
 or `nothing`, if `i` is already occupied. See also [`ann`](@ref ann).
 See also [`create_op`](@ref create_op) for the [`Operator`](@ref Operator) version.
 """
-function create(state::Fockstate{Length}, i::Int)::Union{Nothing,Fockstate} where Length
+function create(state::Fockstate{Length}, i::Int)::Union{Nothing,Fockstate} where {Length}
     if state[i]
         return nothing
     else
-        return Fockstate{Length}([s != i ? state[s] : 1 for s in 1:Length])
+        return Fockstate{Length}([s != i ? state[s] : 1 for s = 1:Length])
     end
 end
 
@@ -76,8 +76,8 @@ end
 """
 function create_op(b::Basis, i::Int)
     len = typeof(b).parameters[1]
-    S_inc = 2*(i < len/2) - 1
-    Operator(s->create(s,i), 1, S_inc)
+    S_inc = 2 * (i < len / 2) - 1
+    Operator(s -> create(s, i), 1, S_inc)
 end
 
 """
@@ -87,11 +87,11 @@ Returns either a new [`Fockstate`](@ref Fockstate) with an electron `i` annihila
 or `nothing`, if `i` is not occupied. See also [`create`](@ref create).
 See also [`ann_op`](@ref ann_op) for the [`Operator`](@ref Operator) version.
 """
-function ann(state::Fockstate{Length}, i::Int)::Union{Nothing,Fockstate} where Length
+function ann(state::Fockstate{Length}, i::Int)::Union{Nothing,Fockstate} where {Length}
     if !state[i]
         return nothing
     else
-        return Fockstate{Length}([s != i ? state[s] : 0 for s in 1:Length])
+        return Fockstate{Length}([s != i ? state[s] : 0 for s = 1:Length])
     end
 end
 
@@ -102,8 +102,8 @@ end
 """
 function ann_op(b::Basis, i::Int)
     len = typeof(b).parameters[1]
-    S_inc = 2*(i > len/2) - 1
-    Operator(s->ann(s,i), -1, S_inc)
+    S_inc = 2 * (i > len / 2) - 1
+    Operator(s -> ann(s, i), -1, S_inc)
 end
 
 # ============================================== Overlaps ============================================
@@ -117,7 +117,7 @@ for an overlap involving this operator is available.
 
 Returns: True/False
 """
-overlap(bra::Fockstate, ket::Fockstate)::Bool = sum(xor.(bra,ket)) == 0
+overlap(bra::Fockstate, ket::Fockstate)::Bool = sum(xor.(bra, ket)) == 0
 
 """
     overlap_cdagger_c(bra::Fockstate, i::Int, ket::Fockstate, j::Int)::Int
@@ -141,13 +141,13 @@ julia> jED.overlap_cdagger_c(t1,t1,2,2)
 ```
 """
 function overlap_cdagger_c(bra::Fockstate, createInd::Int, ket::Fockstate, annInd::Int)::Int
-    diff = sum(xor.(bra,ket))
+    diff = sum(xor.(bra, ket))
     # overlap is only != 0 if exactly 0 or 2 positions don't match
     # we only check sign of the right state, so we manually check of operators on the left state generate 0
     res = if diff == 2 && ((!bra[annInd]) & bra[createInd])
         # This will give 0, when createInd == annInd, even if righ[createInd] == 1. however, in this case the overlap is 0, since diff == 2
         # if annInd < createInd, we need an aditional - sign, since a state annInd is created first
-        CDag_sign(ket,createInd)*C_sign(ket,annInd)*(-2*(annInd < createInd) + 1)
+        CDag_sign(ket, createInd) * C_sign(ket, annInd) * (-2 * (annInd < createInd) + 1)
     elseif diff == 0 && createInd == annInd
         ket[annInd]
     else
@@ -164,7 +164,7 @@ Calculate ⟨bra| n^†_i n_j |ket⟩
 Returns: True/False (converts to 1/0)
 """
 function overlap_ni_nj(bra::Fockstate, ket::Fockstate, i::Int, j::Int)::Bool
-    return ket[i] & ket[j] & overlap(bra,ket)
+    return ket[i] & ket[j] & overlap(bra, ket)
 end
 
 # ----------------------------------------- Helper Functions -----------------------------------------
@@ -178,7 +178,7 @@ function overlap_2(bra::Vector{ComplexF64}, ket::Vector{ComplexF64})::Float64
     return Float64(conj(c) * c)
 end
 
-overlap_2(bra::Vector{Float64}, ket::Vector{Float64})::Float64 = dot(bra,ket)^2
+overlap_2(bra::Vector{Float64}, ket::Vector{Float64})::Float64 = dot(bra, ket)^2
 
 
 """
@@ -198,10 +198,10 @@ function _overlap_list(basis::Basis, i::Int, j::Int, op::Operator)
     slice_i = _block_slice(basis.blocklist[i])
     slice_j = _block_slice(basis.blocklist[j])
     res = zeros(Int, length(slice_i))
-    for (i,bi) in enumerate(basis.states[slice_i])
+    for (i, bi) in enumerate(basis.states[slice_i])
         b_new = op(bi)
-        for (j,bj) in enumerate(basis.states[slice_j])
-            all(b_new.== bj) && (res[i] = j)
+        for (j, bj) in enumerate(basis.states[slice_j])
+            all(b_new .== bj) && (res[i] = j)
         end
     end
     return res
@@ -210,7 +210,7 @@ end
 function _overlap_list(basis::Basis, op::Operator)
     ov_i = _find_cdag_overlap_blocks(basis.blocklist, op)
     res = zeros(Int, length(basis.states))
-    for (i,j) in enumerate(ov_i)
+    for (i, j) in enumerate(ov_i)
         slice_i = _block_slice(basis.blocklist[i])
         if j > 0
             res[slice_i] = _overlap_list(basis, i, j, op)
@@ -233,13 +233,14 @@ TODO: do not hardcode spin up GF!!! (this forces S+1 instead of S+-1 for now)
 """
 function _find_cdag_overlap_blocks(blocklist::Vector{Blockinfo}, op::Operator)
     res = Array{Int}(undef, length(blocklist))
-    for bi in 1:length(blocklist)
+    for bi = 1:length(blocklist)
         _, _, Nel_ket, S_ket = blocklist[bi]
-        indN = searchsorted(map(x->x[3],blocklist), Nel_ket+op.N_inc)
+        indN = searchsorted(map(x -> x[3], blocklist), Nel_ket + op.N_inc)
         if length(indN) > 0
-            indS = searchsortedfirst(map(x->x[4],blocklist[indN]), S_ket+op.S_inc)
+            indS = searchsortedfirst(map(x -> x[4], blocklist[indN]), S_ket + op.S_inc)
             val = first(indN) + indS - 1
-            res[bi] = val <= length(blocklist) && blocklist[val][4] == S_ket+op.S_inc ? val : 0
+            res[bi] =
+                val <= length(blocklist) && blocklist[val][4] == S_ket + op.S_inc ? val : 0
         else
             res[bi] = 0
         end
@@ -252,10 +253,15 @@ end
 
 Computes ``\\langle \\text{EV}_j | c^\\dagger_k | \\text{EV}_i \\rangle`` where ``\\c^\\dagger`` has been computed in the Fockbasis and is given as a permutation of indices for ``\\langle \\text{EV}_j |``.
 
-This is an internal function used to compute the [`overlaps`](@ref overlap_cdagger).
+This is an internal function used to compute the [`overlaps`](@ref overlap_cdagger_c).
 """
-function _overlap_cdagger_ev!(tmp::Vector{Float64}, vec1::Vector{Float64}, vec2::Vector{Float64}, perm::Vector{Int})::Float64
-    for (i,p) in enumerate(perm)
+function _overlap_cdagger_ev!(
+    tmp::Vector{FPT},
+    vec1::Vector{FPT},
+    vec2::Vector{FPT},
+    perm::Vector{Int},
+)::Float64 where {FPT}
+    for (i, p) in enumerate(perm)
         if p == 0
             tmp[i] = 0
         else
@@ -264,4 +270,3 @@ function _overlap_cdagger_ev!(tmp::Vector{Float64}, vec1::Vector{Float64}, vec2:
     end
     return dot(vec1, tmp)
 end
-

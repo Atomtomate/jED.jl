@@ -10,7 +10,12 @@
 # ==================================================================================================== #
 
 
-const Fockstate = SVector{Length, Bool} where Length
+"""
+    Fockstate
+
+Internal representation of a Fockstate.
+"""
+const Fockstate = SVector{Length,Bool} where {Length}
 const Blockinfo = NTuple{4,Int}
 
 # =============================================== Basis ==============================================
@@ -38,17 +43,26 @@ struct Basis{Length}
     blocklist::Vector{Blockinfo}
 end
 
+"""
+    Basis(NSites::Int; NFlavors::Int = 2)
+
+Contructs a Fock basis for `NSites` with `NFlavors`.
+"""
 function Basis(NSites::Int; NFlavors::Int = 2)
     Length = NFlavors * NSites
     states = Vector{Fockstate{Length}}(undef, 4^NSites)
     NInt = 2^NSites - 1
     ii = 1
-    for i_up in 0:NInt
-        for i_down in 0:NInt
+    for i_up = 0:NInt
+        for i_down = 0:NInt
             # states[ii] = BitVector(cat(digits(i_up,base=2,pad=32), digits(i_down,base=2,pad=32),dims=1))
-            states[ii] = Fockstate{Length}(cat(digits(i_up,  base=2, pad=NSites),
-                                               digits(i_down,base=2, pad=NSites),
-                                               dims=1))
+            states[ii] = Fockstate{Length}(
+                cat(
+                    digits(i_up, base = 2, pad = NSites),
+                    digits(i_down, base = 2, pad = NSites),
+                    dims = 1,
+                ),
+            )
             ii += 1
         end
     end
@@ -70,14 +84,14 @@ N_el(s::Fockstate)::Int = sum(s)
 
 Number of up electrons, ``N_\\uparrow`` in state `s`.
 """
-N_up(s::Fockstate{NSites}) where NSites = sum(s[1:Int(NSites/2)])
+N_up(s::Fockstate{NSites}) where {NSites} = sum(s[1:Int(NSites / 2)])
 
 """
     N_do(s::Fockstate{NSites})
 
 Number of down electrons, ``N_\\downarrow`` in state `s`.
 """
-N_do(s::Fockstate{NSites}) where NSites = sum(s[Int(NSites/2)+1:end])
+N_do(s::Fockstate{NSites}) where {NSites} = sum(s[Int(NSites / 2)+1:end])
 
 """
     S(s::AbstractVector)::Int
@@ -85,7 +99,7 @@ N_do(s::Fockstate{NSites}) where NSites = sum(s[Int(NSites/2)+1:end])
 Total spin of state.
 #TODO: only implemented for flavor=2
 """
-S(s::Fockstate{NSites}) where NSites = N_up(s) - N_do(s)
+S(s::Fockstate{NSites}) where {NSites} = N_up(s) - N_do(s)
 
 """
     C_sign(state,i)
@@ -100,7 +114,7 @@ julia> C_sign(Fockstate{6}(Bool[1,0,1,1,0,0]),2)
 julia> C_sign(Fockstate{6}(Bool[1,0,1,1,0,0]),4)
 ```
 """
-C_sign(state::Fockstate, i::Int) = (1-2*(sum(state[1:i-1])%2))*state[i]
+C_sign(state::Fockstate, i::Int) = (1 - 2 * (sum(state[1:i-1]) % 2)) * state[i]
 
 """
     CDag_sign(state,i)
@@ -116,7 +130,7 @@ julia> CDag_sign(Fockstate{7}(Bool[1,0,1,0,1,0,0]),4)
 1
 ```
 """
-CDag_sign(state::Fockstate, i::Int) = (1-2*(sum(state[1:i-1])%2))*(!state[i])
+CDag_sign(state::Fockstate, i::Int) = (1 - 2 * (sum(state[1:i-1]) % 2)) * (!state[i])
 
 
 # ============================================= Internals ============================================
@@ -126,7 +140,7 @@ CDag_sign(state::Fockstate, i::Int) = (1-2*(sum(state[1:i-1])%2))*(!state[i])
 
 Sort state list and generate list of blocks.
 """
-function _generate_blocks!(states::Vector{Fockstate{Length}}) where Length
+function _generate_blocks!(states::Vector{Fockstate{Length}}) where {Length}
     sort_f(x::Fockstate) = N_el(x)^3 + S(x)
     sort!(states, by = sort_f)
     blocks = Vector{Blockinfo}(undef, 0)
@@ -136,7 +150,7 @@ function _generate_blocks!(states::Vector{Fockstate{Length}}) where Length
     current_block_start = 1
     current_block_size = 1
 
-    for i in 2:length(states)
+    for i = 2:length(states)
         Ni = N_el(states[i])
         Si = S(states[i])
         if Ni != last_N || Si != last_S

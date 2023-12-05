@@ -1,6 +1,6 @@
 @testset "Greens Function Stuff" begin
     p = AIMParams([3.0, 4.0],[1.0,2.0])
-    νnGrid = jED.FermionicMatsubaraGrid(1.0im .* collect(2:3), 0:1)
+    νnGrid = jED.FermionicMatsubaraGrid{Float64}(1.0im .* collect(2:3), 0:1)
     Δi = jED.Δ_AIM(νnGrid, p)
     @test Δi[0] ≈ conj(1^2/(2im-3.0) + 2^2/(2im-4))
     @test Δi[1] ≈ conj(1^2/(3im-3.0) + 2^2/(3im-4))

@@ -9,11 +9,12 @@ using TOML
 using LsqFit
 # using KrylovKit
 using Dispersions
+using MultiFloats, GenericLinearAlgebra
 
 export Fockstate, Basis, Overlap, Operator, create, ann, create_op, ann_op
 export Eigenspace, calc_Hamiltonian
 export calc_Z, calc_E
-export calc_GF_1, Overlap
+export calc_GF_1, calc_GF_1_inplace, Overlap
 
 # IO
 export show_matrix_block
@@ -21,7 +22,8 @@ export show_matrix_block
 export AIM, AIMParams
 
 # DMFT
-export Σ_from_GImp, GWeiss, GWeiss!, GWeiss_from_Δ, GWeiss_from_Imp, Δ_AIM, GLoc, fit_AIM_params!
+export Σ_from_GImp,
+    GWeiss, GWeiss!, GWeiss_from_Δ, GWeiss_from_Imp, Δ_AIM, GLoc, GLoc_MO, fit_AIM_params!
 
 to = TimerOutput()
 
