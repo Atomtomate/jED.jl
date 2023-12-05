@@ -2,6 +2,7 @@ using Distributed
 @everywhere using Pkg
 @everywhere Pkg.activate(joinpath(@__DIR__,".."))
 @everywhere using jED
+using HDF5
 
 VkSamples = 2
 EkSamples = 2
@@ -87,7 +88,8 @@ end
 
 
 Nν::Int = 100 
-pararamsList_check = Array{ComplexF64,2}(undef, length(fullParamList[1]), NSamples)
+NParams = length(fullParamList[1])
+paramsList_check = Array{Float64,2}(undef, NParams, NSamples)
 G0WList = Array{ComplexF64,2}(undef, Nν, NSamples)
 GImpList = Array{ComplexF64,2}(undef, Nν, NSamples)
 ΣImpList = Array{ComplexF64,2}(undef, Nν, NSamples)
@@ -100,9 +102,25 @@ for (i,res) in enumerate(workers())
     println(res[1])
     println(size(res[1]))
     println(size(res[2]))
-    pararamsList_check[:, ind] = res[1] 
+    paramsList_check[:, ind] = res[1] 
     G0WList[:, ind] = res[2] 
     GImpList[:, ind] = res[3] 
     ΣImpList[:, ind] = res[4] 
     densList[ind] = res[5] 
+end
+
+fn = "test.hdf5"
+h5open(fn, "w") do f
+    gr = create_group(f, "Set1")
+    dset = create_dataset(gr, "Parameters", Float64, (NParams, NSamples))
+    write(dset, paramsList_check)
+    dset = create_dataset(gr, "G0W", ComplexF64, (Nν, NSamples))
+    write(dset, G0WList)
+    dset = create_dataset(gr, "GImp", ComplexF64, (Nν, NSamples))
+    write(dset, GImpList)
+    dset = create_dataset(gr, "SImp", ComplexF64, (Nν, NSamples))
+    write(dset, ΣImpList)
+    dset = create_dataset(gr, "dens", Float64, (NSamples,))
+    write(dset, densList)
+
 end
