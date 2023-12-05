@@ -1,72 +1,62 @@
-using Pkg
-Pkg.activate(joinpath(@__DIR__,".."))
-using jED
 using Distributed
+@everywhere using Pkg
+@everywhere Pkg.activate(joinpath(@__DIR__,".."))
+@everywhere using jED
 
-VkSamples = 10
-HubbParSamples = 10
+VkSamples = 2
+EkSamples = 2
+MuSamples = 2
+betaSamples = 1
+USamples = 1
+
 NBath = 2
 
+βList = [30.0] # 1 ./ LinRange(0.06,1,HubbParSamples)
+UList = [1.0]
 
+println("Total length: ", USamples*betaSamples*MuSamples*VkSamples^NBath*EkSamples^NBath)
 
-fullParamList = []
-sizehint!(fullParamList, HubbParSamples^2 * VkSamples^4)
+Ui = UList[1]
+V1 = LinRange(0,1.0,VkSamples)
+E1 = LinRange(-2Ui, 2Ui, EkSamples)
+μList = LinRange(-2*Ui, 2*Ui, MuSamples) 
 
-βList  = 1 ./ LinRange(0.06,1,HubbParSamples)
-UList  = LinRange(0.1, 4, HubbParSamples)
-VKList = Vector{Vector}(undef, 0)
-V1 = LinRange(1/VkSamples,0.5,VkSamples)
-for V1i in V1
-    V1i ≈ 0 && continue
-    for V2i in LinRange(V1i,0.5, VkSamples+1)[2:end]
-        V2i ≈ -0 && continue
-        t = [V1i, V2i]
-        push!(VKList, t ./ (2 * sqrt(sum(t .^ 2))))
-    end
-end
+fullParamList = collect(Base.product(E1,E1,V1,V1,μList,UList,βList))[:]
+NSamples = length(fullParamList)
+println("check: ", NSamples)
 
-for βi in βList
-    for Ui in UList
-        for μi in [Ui/2]
-            for E1i in LinRange(1/VkSamples,2*Ui,VkSamples)
-                E1i ≈ 0 && continue
-                for E2i in LinRange(E1i,0.5, VkSamples+1)[2:end]
-                    E2i ≈ 0 && continue
-                    for Vki in VKList
-                        push!(fullParamList, [βi, Ui, μi, E1i, E2i, Vki[1], Vki[2]])
-                    end
-                end
-            end
-        end
-    end
-end
 
 @everywhere function solve_imp(parList)
-    tsc= 0.40824829046386307/2      # hopping amplitude
-    Nk::Int = 40                         # Number of k-sampling points i neach direction
-    kG = jED.gen_kGrid("3Dsc-$tsc", Nk)                 # struct for k-grid
+    # tsc= 0.40824829046386307/2      # hopping amplitude
+    # Nk::Int = 40                         # Number of k-sampling points i neach direction
+    # kG = jED.gen_kGrid("3Dsc-$tsc", Nk)                 # struct for k-grid
+
+    # ========== TODO: this is only fixed for this test ============
     Nν::Int = 100
     NB::Int = 2
+    β::Float64 = 30.0
     νnGrid = jED.OffsetVector([1im * (2*n+1)*π/β for n in 0:Nν-1], 0:Nν-1)
+    # ========== TODO: this is only fixed for this test ============
 
     basis  = jED.Basis(NB+1);       # ED basis
     imp_OP = create_op(basis, 1)    # Operator for impurity measurement
     overlap= Overlap(basis, imp_OP)       # helper for <i|OP|j> overlaps for 
     Σ0 = similar(νnGrid); fill!(Σ0, 0.0)
-    GBath = GLoc(Σ0, μ, νnGrid, kG)
+    #GBath = GLoc(Σ0, μ, νnGrid, kG)
 
 
+    G0WMatrix   = Matrix{ComplexF64}(undef, Nν, length(parList))
     GImpMatrix = Matrix{ComplexF64}(undef, Nν, length(parList))
     ΣImpMatrix = Matrix{ComplexF64}(undef, Nν, length(parList))
-    pOutMatrix = Matrix{Float64}(undef, 4, length(parList))
+    densList   = Vector{Float64}(undef, length(parList))
 
     for (it, el) in enumerate(parList)
-        β, U, μ, e1, e2, v1, v2 = el
+        e1, e2, v1, v2, μ, U, β = el
         ϵₖ = [e1, e2]
         Vₖ = [v1, v2]
 
-        p  = AIMParams(ϵₖ, Vₖ)          # Anderson Parameters (struct type)
-        G0W    = GWeiss(νnGrid, μ, p)
+        p    = AIMParams(ϵₖ, Vₖ)          # Anderson Parameters (struct type)
+        G0W  = GWeiss(νnGrid, μ, p)
 
         # Impurity solution
         model  = AIM(ϵₖ, Vₖ, μ, U)
@@ -76,13 +66,43 @@ end
         #fit_AIM_params!(p, GImp_i, μ, νnGrid)
        
         ΣImp_i = Σ_from_GImp(G0W, GImp_i)
-        GLoc_i = jED.GLoc(ΣImp_i, μ, νnGrid, kG)
-
-        # Fits
-        fit_AIM_params!(p, GLoc_i, μ, νnGrid)
+        # GLoc_i = jED.GLoc(ΣImp_i, μ, νnGrid, kG)
+        # # Fits
+        # fit_AIM_params!(p, GLoc_i, μ, νnGrid)
+        G0WMatrix[:,it] = G0W
         GImpMatrix[:,it] = GImp_i
         ΣImpMatrix[:,it] = ΣImp_i
-        pOutMatrix[:,it] = [p.ϵₖ...,p.Vₖ...]
+        densList[it] = dens
     end
-    return GImpMatrix, ΣImpMatrix, pOutMatrix
+    return hcat(collect.(parList)...), G0WMatrix, GImpMatrix, ΣImpMatrix, densList
+end
+
+NWorkers = length(workers())
+ChunkSize = ceil(Int, NSamples/NWorkers)
+batch_indices = collect(Base.Iterators.partition(1:length(fullParamList),ChunkSize))
+futures = []
+for (i,wi) in enumerate(workers())
+    push!(futures, remotecall(solve_imp, wi, fullParamList[batch_indices[i]]))
+end
+
+
+Nν::Int = 100 
+pararamsList_check = Array{ComplexF64,2}(undef, length(fullParamList[1]), NSamples)
+G0WList = Array{ComplexF64,2}(undef, Nν, NSamples)
+GImpList = Array{ComplexF64,2}(undef, Nν, NSamples)
+ΣImpList = Array{ComplexF64,2}(undef, Nν, NSamples)
+densList = Array{Float64,1}(undef, NSamples)
+fill!(densList, NaN)
+
+for (i,res) in enumerate(workers())
+    res = fetch(futures[i])
+    ind = batch_indices[i]
+    println(res[1])
+    println(size(res[1]))
+    println(size(res[2]))
+    pararamsList_check[:, ind] = res[1] 
+    G0WList[:, ind] = res[2] 
+    GImpList[:, ind] = res[3] 
+    ΣImpList[:, ind] = res[4] 
+    densList[ind] = res[5] 
 end
