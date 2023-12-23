@@ -71,3 +71,7 @@ If necessary, those can be either changed in palce, or made available to the bas
 
 This code is written with readability as main goal in order to demonstrate the ED algorithm.
 However, if you decide to run this code for larger scale models, see `example15` in the `scripts` directory for hints to improve performance slightly.
+
+## Dependencies
+
+Some examples use the [[SparseIR]](https://github.com/SpM-lab/SparseIR.jl) package. Please read their LICENSE file before adapting any code from this repository using the sparseIR basis package!

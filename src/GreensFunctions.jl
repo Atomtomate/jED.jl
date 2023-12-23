@@ -7,6 +7,7 @@
 # -------------------------------------------- TODO -------------------------------------------------- #
 #   Only a first draft, needs refactor and testing.                                                    #
 #   Do not hardcode spin up GF!!!                                                                      #
+#   Greens Function and MatsubaraGrid type (use SparseIR?)                                             #
 # ==================================================================================================== #
 
 

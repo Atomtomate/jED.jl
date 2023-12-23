@@ -4,9 +4,9 @@ using Distributed
 @everywhere using jED
 using HDF5
 
-VkSamples = 2
-EkSamples = 2
-MuSamples = 2
+VkSamples = 10
+EkSamples = 10
+MuSamples = 20
 betaSamples = 1
 USamples = 1
 
@@ -42,7 +42,7 @@ println("check: ", NSamples)
     basis  = jED.Basis(NB+1);       # ED basis
     imp_OP = create_op(basis, 1)    # Operator for impurity measurement
     overlap= Overlap(basis, imp_OP)       # helper for <i|OP|j> overlaps for 
-    Σ0 = similar(νnGrid); fill!(Σ0, 0.0)
+    # Σ0 = similar(νnGrid); fill!(Σ0, 0.0)
     #GBath = GLoc(Σ0, μ, νnGrid, kG)
 
 
