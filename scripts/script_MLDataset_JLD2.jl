@@ -2,7 +2,7 @@ using Distributed
 @everywhere using Pkg
 @everywhere Pkg.activate(joinpath(@__DIR__,".."))
 @everywhere using jED
-using HDF5
+using JLD2
 
 VkSamples = 2
 EkSamples = 2
@@ -109,18 +109,11 @@ for (i,res) in enumerate(workers())
     densList[ind] = res[5] 
 end
 
-fn = "test.hdf5"
-h5open(fn, "w") do f
-    gr = create_group(f, "Set1")
-    dset = create_dataset(gr, "Parameters", Float64, (NParams, NSamples))
-    write(dset, paramsList_check)
-    dset = create_dataset(gr, "G0W", ComplexF64, (Nν, NSamples))
-    write(dset, G0WList)
-    dset = create_dataset(gr, "GImp", ComplexF64, (Nν, NSamples))
-    write(dset, GImpList)
-    dset = create_dataset(gr, "SImp", ComplexF64, (Nν, NSamples))
-    write(dset, ΣImpList)
-    dset = create_dataset(gr, "dens", Float64, (NSamples,))
-    write(dset, densList)
+fn = "test.jld2"
+jldopen(fn, "w") do f
+    f["Set1/Parameters"] = paramsList_check
+    f["Set1/G0W"] = G0WList
+    f["Set1/GImp"] = GImpList
+    f["Set1/dens"] = densList
 
 end
