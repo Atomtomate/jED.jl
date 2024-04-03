@@ -3,6 +3,7 @@
 *.jl.mem
 *.txt
 *.hdf5
+*.jld2
 *.csv
 /docs/build/
 /docs/site/
