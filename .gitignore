@@ -2,5 +2,7 @@
 *.jl.cov
 *.jl.mem
 *.txt
+*.hdf5
+*.csv
 /docs/build/
 /docs/site/
