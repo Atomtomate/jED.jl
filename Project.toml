@@ -1,7 +1,7 @@
 name = "jED"
 uuid = "97545629-2858-4d6a-8329-5c595e37ec1c"
 authors = ["Julian Stobbe"]
-version = "0.11.2"
+version = "0.11.3"
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"

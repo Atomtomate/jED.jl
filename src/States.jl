@@ -48,7 +48,7 @@ end
 
 Contructs a Fock basis for `NSites` with `NFlavors`.
 """
-function Basis(NSites::Int; NFlavors::Int = 2)
+function Basis(NSites::Int; NFlavors::Int=2)
     Length = NFlavors * NSites
     states = Vector{Fockstate{Length}}(undef, 4^NSites)
     NInt = 2^NSites - 1
@@ -58,9 +58,9 @@ function Basis(NSites::Int; NFlavors::Int = 2)
             # states[ii] = BitVector(cat(digits(i_up,base=2,pad=32), digits(i_down,base=2,pad=32),dims=1))
             states[ii] = Fockstate{Length}(
                 cat(
-                    digits(i_up, base = 2, pad = NSites),
-                    digits(i_down, base = 2, pad = NSites),
-                    dims = 1,
+                    digits(i_up, base=2, pad=NSites),
+                    digits(i_down, base=2, pad=NSites),
+                    dims=1,
                 ),
             )
             ii += 1
@@ -142,7 +142,7 @@ Sort state list and generate list of blocks.
 """
 function _generate_blocks!(states::Vector{Fockstate{Length}}) where {Length}
     sort_f(x::Fockstate) = N_el(x)^3 + S(x)
-    sort!(states, by = sort_f)
+    sort!(states, by=sort_f)
     blocks = Vector{Blockinfo}(undef, 0)
 
     last_N::Int = N_el(states[1])

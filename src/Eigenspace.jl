@@ -39,8 +39,8 @@ Constructs the Eigenspace for [`Model`](@ref Model) over given [`Basis`](@ref Ba
 function Eigenspace(
     model::Model,
     basis::Basis;
-    verbose::Bool = true,
-    FPT::Type{FPTi} = eltype(model.tMatrix),
+    verbose::Bool=true,
+    FPT::Type{FPTi}=eltype(model.tMatrix),
 ) where {FPTi<:Real}
 
     EVecType = typeof(model).parameters[2]
@@ -50,7 +50,7 @@ function Eigenspace(
     verbose && print("Generating Eigenspace:   0.0% done.")
     for el in basis.blocklist
         slice = _block_slice(el)
-        Hi = calc_Hamiltonian(model, basis.states[slice]; FPT = FPT)
+        Hi = calc_Hamiltonian(model, basis.states[slice]; FPT=FPT)
         tmp = eigen(Hi)
         evals[slice] .= tmp.values
         for i = 1:length(tmp.values)
@@ -58,7 +58,7 @@ function Eigenspace(
         end
         verbose && (
             done = lpad(
-                round(100 * (el[1] + el[2]) / length(basis.states), digits = 1),
+                round(100 * (el[1] + el[2]) / length(basis.states), digits=1),
                 5,
                 " ",
             )
@@ -89,16 +89,16 @@ function Eigenspace_L(model::Model, basis::Basis)
             rand(Float64, size(Hi, 1)),
             krylov_dim,
             :SR,
-            krylovdim = krylov_dim,
-            ishermitian = true,
-            issymmetric = issymmetric,
+            krylovdim=krylov_dim,
+            ishermitian=true,
+            issymmetric=issymmetric,
         )
         nv = conv.converged
         evals[first(slice):first(slice)+nv-1] .= values[1:nv]
         for i = 1:nv
             evecs[first(slice)+i-1] = vectors[i]
         end
-        done = lpad(round(100 * (el[1] + el[2]) / length(basis.states), digits = 1), 5, " ")
+        done = lpad(round(100 * (el[1] + el[2]) / length(basis.states), digits=1), 5, " ")
         print("\rGenerating Eigenspace: $(done)% done.")
     end
     println("\rEigenspace generated!                  ")
@@ -118,7 +118,7 @@ Calculates the Hamiltonian for a given
 function calc_Hamiltonian(
     model::Model,
     states::Vector{Fockstate{NSites}};
-    FPT::Type{FPTi} = eltype(model.tMatrix),
+    FPT::Type{FPTi}=eltype(model.tMatrix),
 ) where {NSites,FPTi<:Real}
     Hsize = length(states)
     H_int = Matrix{FPT}(undef, Hsize, Hsize)

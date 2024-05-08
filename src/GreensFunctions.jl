@@ -41,7 +41,7 @@ function overlap_EDiff(
     overlap::Overlap,
     β::Float64,
     ϵ_cut::Float64;
-    with_density::Bool = false,
+    with_density::Bool=false,
 ) where {FPT<:Real}
     bl = basis.blocklist
     res_EDiff = Stack{FPT}()
@@ -72,7 +72,7 @@ function overlap_EDiff(
     return collect(res_factor), collect(res_EDiff), dens
 end
 
-@Base.assume_effects :total function GF_element(pf::Float64, nf::Float64, νn::ComplexF64)::ComplexF64
+Base.@assume_effects :total function GF_element(pf::Float64, nf::Float64, νn::ComplexF64)::ComplexF64
     return pf / (νn + nf)
 end
 
@@ -83,7 +83,7 @@ function calc_GF_1_inplace(
     β::Float64,
     overlap::Overlap,
     ϵ_cut::Float64;
-    with_density::Bool = false,
+    with_density::Bool=false,
 ) where {FPT<:Real}
     bl = basis.blocklist
     res = zeros(Complex{FPT}, length(νnGrid))
@@ -106,7 +106,7 @@ function calc_GF_1_inplace(
                     with_density && (dens += ov * expE[block_to_start+i_to])#expE[block_from_start + i_from])
                     if abs(el_i) > ϵ_cut
                         ΔE = es.evals[slice_from][i_from] - es.evals[slice_to][i_to]
-                        for (νi,νn) in enumerate(νnGrid)
+                        for (νi, νn) in enumerate(νnGrid)
                             res[νi] += GF_element(el_i, ΔE, νn)
                         end
                     end
@@ -136,9 +136,9 @@ function calc_GF_1(
     es::Eigenspace{FPT},
     νnGrid::AbstractVector,
     β::Float64;
-    ϵ_cut::Float64 = 1e-16,
-    overlap = nothing,
-    with_density::Bool = false,
+    ϵ_cut::Float64=1e-16,
+    overlap=nothing,
+    with_density::Bool=false,
 ) where {FPT<:Real}
     global to
 
@@ -155,8 +155,8 @@ function calc_GF_1(
     else
         overlap
     end
-    pf, nf, dens = overlap_EDiff(basis, es, overlap, β, ϵ_cut, with_density = with_density)
-     for νi in eachindex(νnGrid)
+    pf, nf, dens = overlap_EDiff(basis, es, overlap, β, ϵ_cut, with_density=with_density)
+    for νi in eachindex(νnGrid)
         νn = νnGrid[νi]
         for j = 1:length(pf)
             #TODO: reduce memory allocation overhead

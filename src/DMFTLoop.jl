@@ -188,7 +188,7 @@ function GLoc_MO(ΣImp::MatsubaraF, μ::Float64, νnGrid::FermionicMatsubaraGrid
             @inbounds copyto!(rhs, rhs_bak)
             @inbounds val = (μ + νnGrid[νi] - ΣImp[νi])
             # @timeit to "tmp3_1" ldiv!(F, I, shift=val)
-            @inbounds ldiv!(F, rhs, shift = val)
+            @inbounds ldiv!(F, rhs, shift=val)
             @inbounds GLoc[νi] += kMult * rhs[iOrb, iOrb]
             #@timeit to "tmp3_3" GLoc[νi] += kMult * ((F + val*I)\I)[iOrb,iOrb]
             # @timeit to "tmp3_1" copyto!(tmp3, tmp[:,:,ki])

@@ -69,14 +69,14 @@ struct AIM{NSites,T} <: Model
 
     AIM(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Float64, U::Float64) = AIM{eltype(Vₖ)}(ϵₖ, Vₖ, μ, U)
 
-    function AIM{T}(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Float64, U::Float64 ) where {T}
+    function AIM{T}(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Float64, U::Float64) where {T}
         length(ϵₖ) != length(Vₖ) && throw(
             ArgumentError(
                 "length of ϵₖ $(length(ϵₖ)) must be equal to length of Vₖ $(length(Vₖ))!",
             ),
         )
         NSites = length(ϵₖ) + 1
-        tMatrix = collect(Diagonal(cat(T[-μ], ϵₖ, dims = 1)))
+        tMatrix = collect(Diagonal(cat(T[-μ], ϵₖ, dims=1)))
         tMatrix[2:end, 1] .= Vₖ
         tMatrix[1, 2:end] .= conj(Vₖ)
         UMatrix = zeros(T, NSites, NSites)
@@ -120,16 +120,16 @@ struct Hubbard{NSites,T} <: Model
     UMatrix::SMatrix{NSites,NSites,T}
     μ::Float64
 
-    function Hubbard(t::Number, U::Number, μ::Number, NSites::Int, pb = false) 
-        tMatrix = diagm(NSites,NSites,1=>repeat([t],NSites-1), -1 => repeat([t],NSites-1))
-        UMatrix = diagm(NSites,NSites,0=>repeat([U],NSites))
+    function Hubbard(t::Number, U::Number, μ::Number, NSites::Int, pb=false)
+        tMatrix = diagm(NSites, NSites, 1 => repeat([t], NSites - 1), -1 => repeat([t], NSites - 1))
+        UMatrix = diagm(NSites, NSites, 0 => repeat([U], NSites))
         Hubbard{eltype(t)}(tMatrix, UMatrix, μ)
     end
 
     Hubbard(t::AbstractMatrix, U::AbstractMatrix, μ::Number) = Hubbard{eltype(t)}(t, U, μ)
 
     function Hubbard{T}(tMatrix::AbstractMatrix, UMatrix::AbstractMatrix, μ::Float64) where {T}
-        NSites = size(tMatrix,1)
+        NSites = size(tMatrix, 1)
         new{NSites,T}(
             SMatrix{NSites,NSites,T}(tMatrix),
             SMatrix{NSites,NSites,T}(UMatrix),
