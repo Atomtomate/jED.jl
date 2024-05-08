@@ -136,7 +136,8 @@ function run()
         write(dset, ΣImpList)
         dset = create_dataset(gr, "dens", Float64, (NSamples_pruned,))
         write(dset, densList)
-
+        dset = create_dataset(gr, "runscript", String, (1,))
+        write(dset, read(@__FILE__, String))
     end
 end
 

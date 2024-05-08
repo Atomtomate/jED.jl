@@ -2,27 +2,28 @@ using Distributed
 @everywhere using Pkg
 @everywhere Pkg.activate(joinpath(@__DIR__,".."))
 @everywhere using jED
-using HDF5
+using JLD2
 
-VkSamples = 4
-EkSamples = 4
-MuSamples = 4
+VkSamples = 9
+EkSamples = 9
+MuSamples = 9
 betaSamples = 1
 USamples = 1
 
-NBath = 4
+NBath = 3
 
 βList = [30.0] # 1 ./ LinRange(0.06,1,betaSamples)
 UList = [1.0]
 
 println("Total length: ", USamples*betaSamples*MuSamples*VkSamples^NBath*EkSamples^NBath)
 
+fn = "data_batch2_NB3_nPrune.hdf5"
 Ui = UList[1]
 V1 = LinRange(0,1.0,VkSamples)
 E1 = LinRange(-2Ui, 2Ui, EkSamples)
 μList = LinRange(-Ui, 2*Ui, MuSamples) 
 
-fullParamList = collect(Base.product(E1,E1,V1,V1,μList,UList,βList))[:]
+fullParamList = collect(Base.product(repeat([E1],NBath)...,repeat([V1],NBath)...,μList,UList,βList))[:]
 NSamples = length(fullParamList)
 println("check: ", NSamples)
 
@@ -95,7 +96,7 @@ ChunkSize = ceil(Int, NSamples/NWorkers)
 batch_indices = collect(Base.Iterators.partition(1:length(fullParamList),ChunkSize))
 futures = []
 for (i,wi) in enumerate(workers())
-    push!(futures, remotecall(solve_imp, wi, fullParamList[batch_indices[i]]))
+    push!(futures, remotecall(solve_imp, wi, fullParamList[batch_indices[i]], NB = NBath))
 end
 
 function run()
@@ -111,7 +112,7 @@ function run()
         println("optaining results from worker $i")
         res = fetch(futures[i])
         ind = batch_indices[i]
-        #println(res[1])
+        #println(res)
         #println(size(res[1]))
         #println(size(res[2]))
         paramsList_check = hcat(paramsList_check, res[1]) 
@@ -123,20 +124,13 @@ function run()
     NSamples_pruned = length(densList)
     println("disregarded $(100 - 100*NSamples_pruned/NSamples) % of generated samples")
 
-    fn = "data_batch1_NB4_nPrune.hdf5"
-    h5open(fn, "w") do f
-        gr = create_group(f, "Set1")
-        dset = create_dataset(gr, "Parameters", Float64, (NParams, NSamples_pruned))
-        write(dset, paramsList_check)
-        dset = create_dataset(gr, "G0W", ComplexF64, (Nν, NSamples_pruned))
-        write(dset, G0WList)
-        dset = create_dataset(gr, "GImp", ComplexF64, (Nν, NSamples_pruned))
-        write(dset, GImpList)
-        dset = create_dataset(gr, "SImp", ComplexF64, (Nν, NSamples_pruned))
-        write(dset, ΣImpList)
-        dset = create_dataset(gr, "dens", Float64, (NSamples_pruned,))
-        write(dset, densList)
-
+    jldopen(fn, "w") do f
+        f["Set1/Parameters"] = paramsList_check
+        f["Set1/G0W"] = G0WList
+        f["Set1/GImp"] = GImpList
+        f["Set1/dens"] = densList
+        f["Set1/SImp"] = ΣImpList
+        f["Set1/runscript"] = read(@__FILE__, String)
     end
 end
 

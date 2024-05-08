@@ -2,7 +2,7 @@ using Distributed
 @everywhere using Pkg
 @everywhere Pkg.activate(joinpath(@__DIR__,".."))
 @everywhere using jED
-@everywhere using HDF5
+@everywhere using JLD2
 
 VkSamples = 35
 EkSamples = 35
@@ -10,7 +10,7 @@ MuSamples = 20
 betaSamples = 1
 USamples = 1
 
-NBath = 2
+NBath = 3
 
 βList = [30.0] # 1 ./ LinRange(0.06,1,betaSamples)
 UList = [1.0]
@@ -22,7 +22,7 @@ V1 = LinRange(0,1.0,VkSamples)
 E1 = LinRange(-2Ui, 2Ui, EkSamples)
 μList = LinRange(-Ui, 2*Ui, MuSamples) 
 
-fullParamList = collect(Base.product(E1,E1,V1,V1,μList,UList,βList))[:]
+fullParamList = collect(Base.product(repeat([E1],NBath)...,repeat([V1],NBath)...,μList,UList,βList))[:]
 NSamples = length(fullParamList)
 println("check: ", NSamples)
 
@@ -75,19 +75,14 @@ println("check: ", NSamples)
         end
     end
     NSamples = length(parList)
-    h5open(fn_name*"_$index.hdf5", "w") do f
-        NParams = length(parList[1])
-        gr = create_group(f, "Set$index")
-        dset = create_dataset(gr, "Parameters", Float64, (NParams, NSamples))
-        write(dset, hcat(collect.(parList)...))
-        dset = create_dataset(gr, "G0W", ComplexF64, (Nν, NSamples))
-        write(dset, G0WMatrix)
-        dset = create_dataset(gr, "GImp", ComplexF64, (Nν, NSamples))
-        write(dset, GImpMatrix)
-        dset = create_dataset(gr, "SImp", ComplexF64, (Nν, NSamples))
-        write(dset, ΣImpMatrix)
-        dset = create_dataset(gr, "dens", Float64, (NSamples,))
-        write(dset, densList)
+    fn = fn_name*"_$index.hdf5"
+    jldopen(fn, "w") do f
+        f["Set1/Parameters"] = hcat(collect.(parList)...)
+        f["Set1/G0W"] = G0WMatrix
+        f["Set1/GImp"] = GImpMatrix
+        f["Set1/dens"] = densList
+        f["Set1/SImp"] = ΣImpMatrix
+        f["Set1/runscript"] = read(@__FILE__, String)
     end
     return nothing
 end

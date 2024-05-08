@@ -17,7 +17,7 @@ export calc_Z, calc_E
 export calc_GF_1, calc_GF_1_inplace, Overlap
 
 # IO
-export show_matrix_block
+export show_matrix_block, show_energies_states, show_diag_Hamiltonian
 
 export AIM, AIMParams, Hubbard
 
@@ -28,14 +28,13 @@ export Σ_from_GImp,
 to = TimerOutput()
 
 include("States.jl")
-include("IO.jl")
 include("Models.jl")
 include("Eigenspace.jl")
 include("Operators.jl")
 include("Observables.jl")
 include("GreensFunctions.jl")
 include("DMFTLoop.jl")
-
+include("IO.jl")
 
 
 end
