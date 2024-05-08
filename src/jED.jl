@@ -19,7 +19,7 @@ export calc_GF_1, calc_GF_1_inplace, Overlap
 # IO
 export show_matrix_block
 
-export AIM, AIMParams
+export AIM, AIMParams, Hubbard
 
 # DMFT
 export Σ_from_GImp,

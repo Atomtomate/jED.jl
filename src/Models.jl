@@ -67,15 +67,9 @@ struct AIM{NSites,T} <: Model
     μ::Float64
     U::Float64
 
-    AIM(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Float64, U::Float64) =
-        AIM{eltype(Vₖ)}(ϵₖ, Vₖ, μ, U)
+    AIM(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Float64, U::Float64) = AIM{eltype(Vₖ)}(ϵₖ, Vₖ, μ, U)
 
-    function AIM{T}(
-        ϵₖ::AbstractVector,
-        Vₖ::AbstractVector,
-        μ::Float64,
-        U::Float64,
-    ) where {T}
+    function AIM{T}(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Float64, U::Float64 ) where {T}
         length(ϵₖ) != length(Vₖ) && throw(
             ArgumentError(
                 "length of ϵₖ $(length(ϵₖ)) must be equal to length of Vₖ $(length(Vₖ))!",
@@ -95,6 +89,51 @@ struct AIM{NSites,T} <: Model
             AIMParams(ϵₖ, Vₖ),
             μ,
             U,
+        )
+    end
+end
+
+
+"""
+    Hubbard{NSites,T} <: Model
+    Hubbard(t::AbstractMatrix, U::AbstractMatrix, μ::Float64)
+    Hubbard(t::Number, U::Number, μ::Number, NSites::Int, pb = false) 
+
+Type for the Hubbard model. A model can be used to construct a [`Eigenspace`](@ref Eigenspace) given
+a set of [`Basis`](@ref Basis).
+
+- `pb = true` sets periodic boundary conditions for the hopping matrix in the implicit helper 
+constructor that takes numbers instead of the full matrices.
+
+# Example
+```
+julia> t  = 1.0
+julia> U  = 1.0
+julia> μ  = 0.5
+julia> model = Hubbard(t, U, μ, 3, pb = false)
+AIM{3, Float64}([
+-0.5 1.0 1.0; 1.0 0.5 0.0; 1.0 0.0 -5.0], [1.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 0.0], [0.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 0.0])
+```
+"""
+struct Hubbard{NSites,T} <: Model
+    tMatrix::SMatrix{NSites,NSites,T}
+    UMatrix::SMatrix{NSites,NSites,T}
+    μ::Float64
+
+    function Hubbard(t::Number, U::Number, μ::Number, NSites::Int, pb = false) 
+        tMatrix = diagm(NSites,NSites,1=>repeat([t],NSites-1), -1 => repeat([t],NSites-1))
+        UMatrix = diagm(NSites,NSites,0=>repeat([U],NSites))
+        Hubbard{eltype(t)}(tMatrix, UMatrix, μ)
+    end
+
+    Hubbard(t::AbstractMatrix, U::AbstractMatrix, μ::Number) = Hubbard{eltype(t)}(t, U, μ)
+
+    function Hubbard{T}(tMatrix::AbstractMatrix, UMatrix::AbstractMatrix, μ::Float64) where {T}
+        NSites = size(tMatrix,1)
+        new{NSites,T}(
+            SMatrix{NSites,NSites,T}(tMatrix),
+            SMatrix{NSites,NSites,T}(UMatrix),
+            μ,
         )
     end
 end

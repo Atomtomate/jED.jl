@@ -13,3 +13,21 @@
     @test model.UMatrix[1,1] ≈ U
     #@test all(model2.tMatrix .≈ model2.tMatrix')
 end
+@testset "Hubbard" begin
+    
+    t  = 2.0
+    U  = 3.0
+    μ  = 0.5
+
+    tMatrix = [0.0 2.0 0.0;
+               2.0 0.0 2.0;
+               0.0 2.0 0.0]
+    UMatrix = [3.0 0.0 0.0;
+               0.0 3.0 0.0;
+               0.0 0.0 3.0]
+    model = Hubbard(t, U, μ, 3)
+    model2 = Hubbard(tMatrix, UMatrix, μ)
+    for el in fieldnames(typeof(model))
+        @test getproperty(model,el) .== getproperty(model2,el)
+    end
+end

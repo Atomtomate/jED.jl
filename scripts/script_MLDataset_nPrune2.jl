@@ -4,9 +4,9 @@ using Distributed
 @everywhere using jED
 using HDF5
 
-VkSamples = 2
-EkSamples = 2
-MuSamples = 2
+VkSamples = 4
+EkSamples = 4
+MuSamples = 4
 betaSamples = 1
 USamples = 1
 
@@ -22,13 +22,13 @@ V1 = LinRange(0,1.0,VkSamples)
 E1 = LinRange(-2Ui, 2Ui, EkSamples)
 μList = LinRange(-Ui, 2*Ui, MuSamples) 
 
-fullParamList = collect(Base.product(E1,E1,E1,E1,V1,V1,V1,V1,μList,UList,βList))[:]
+fullParamList = collect(Base.product(E1,E1,V1,V1,μList,UList,βList))[:]
 NSamples = length(fullParamList)
 println("check: ", NSamples)
 
 
 
-@everywhere function solve_imp(parList; Nν::Int = 100, NB::Int = 4, β::Float64 = 30.0, dens_eps::Float64 = 1e-1)
+@everywhere function solve_imp(parList; Nν::Int = 100, NB::Int = 2, β::Float64 = 30.0, dens_eps::Float64 = 1e-1)
     # tsc= 0.40824829046386307/2      # hopping amplitude
     # Nk::Int = 40                         # Number of k-sampling points i neach direction
     # kG = jED.gen_kGrid("3Dsc-$tsc", Nk)                 # struct for k-grid
@@ -140,6 +140,6 @@ function run()
     end
 end
 
-#run()
-print(String(@__FILE__))
+run()
+
 rmprocs()

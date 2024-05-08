@@ -170,7 +170,7 @@ end
 """
     _H_nn(istate, jstate, tMatrix)
 
-Returns the hopping contribution for states ``\\sum_{i,j} \\langle i | T | j \\rangle``, with T being the hopping matrix `tmatrix` and
+Returns the density-density contribution for states ``\\sum_{i} \\langle i | U | i \\rangle``, with T being the hopping matrix `tmatrix` and
 the states i and j given by `istate` and `jstate`.
 """
 function _H_nn(bra::Fockstate, ket::Fockstate, UMatrix::SMatrix)

@@ -159,7 +159,7 @@ end
 """
     overlap_ni_nj(bra::Fockstate, ket::Fockstate, i::Int, j::Int)
 
-Calculate ⟨bra| n^†_i n_j |ket⟩
+Calculate ⟨bra| n_i n_j |ket⟩
 
 Returns: True/False (converts to 1/0)
 """
