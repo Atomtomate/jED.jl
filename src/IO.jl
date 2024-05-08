@@ -86,7 +86,7 @@ function show_energies_states(b::Basis,  es::Eigenspace; io=stdout, eps_cut=1e-1
                     end
                     start_of_print = false
                     print(io,"$(lpad(round(ev_j; digits=2),5)) x [")
-                    show(io, MIME"text/plain"(), b.states[j])
+                    show(io, MIME"text/plain"(), b.states[i+j-1])
                     print(io,"]")
                 end
             end
