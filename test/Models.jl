@@ -28,6 +28,6 @@ end
     model = Hubbard(t, U, μ, 3)
     model2 = Hubbard(tMatrix, UMatrix, μ)
     for el in fieldnames(typeof(model))
-        @test getproperty(model,el) .== getproperty(model2,el)
+        @test all(getproperty(model,el) .== getproperty(model2,el))
     end
 end
