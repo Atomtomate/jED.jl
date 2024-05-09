@@ -28,7 +28,7 @@ function show(io::IO, ::MIME"text/plain", b::Basis{Length}) where {Length}
         println(block_str)
         for i in _block_slice(el)
             print(io, "   |          ")
-            show(io, "text/plain", b.states[i])
+            show(io, MIME"text/plain"(), b.states[i])
             println(io, "")
         end
     end

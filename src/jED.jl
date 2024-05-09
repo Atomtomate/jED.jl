@@ -18,8 +18,10 @@ export calc_GF_1, calc_GF_1_inplace, Overlap
 
 # IO
 export show_matrix_block, show_energies_states, show_diag_Hamiltonian
+export show
 
-export AIM, AIMParams, Hubbard
+export AIM, AIMParams
+export Hubbard, Hubbard_Full, Hubbard_Chain
 
 # DMFT
 export Σ_from_GImp,

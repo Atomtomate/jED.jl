@@ -44,11 +44,12 @@ struct Basis{Length}
 end
 
 """
-    Basis(NSites::Int; NFlavors::Int = 2)
+    Basis(NSites::Int; NFlavors::Int=2; N_filter=nothing, S_filter=nothing)
 
 Contructs a Fock basis for `NSites` with `NFlavors`.
+Provide `N_filter` or `S_filter` if you want only thos quantum number is the basis.
 """
-function Basis(NSites::Int; NFlavors::Int=2)
+function Basis(NSites::Int; NFlavors::Int=2, N_filter=Int[], S_filter=Int[])
     Length = NFlavors * NSites
     states = Vector{Fockstate{Length}}(undef, 4^NSites)
     NInt = 2^NSites - 1
@@ -66,9 +67,7 @@ function Basis(NSites::Int; NFlavors::Int=2)
             ii += 1
         end
     end
-
-    blocklist = _generate_blocks!(states)
-
+    blocklist = _generate_blocks!(states, N_filter=N_filter, S_filter=S_filter)
     Basis{Length}(NFlavors, NSites, states, blocklist)
 end
 
@@ -94,7 +93,7 @@ Number of down electrons, ``N_\\downarrow`` in state `s`.
 N_do(s::Fockstate{NSites}) where {NSites} = sum(s[Int(NSites / 2)+1:end])
 
 """
-    S(s::AbstractVector)::Int
+    S(s::Fockstate{NSites}) where {NSites}
 
 Total spin of state.
 #TODO: only implemented for flavor=2
@@ -140,8 +139,11 @@ CDag_sign(state::Fockstate, i::Int) = (1 - 2 * (sum(state[1:i-1]) % 2)) * (!stat
 
 Sort state list and generate list of blocks.
 """
-function _generate_blocks!(states::Vector{Fockstate{Length}}) where {Length}
-    sort_f(x::Fockstate) = N_el(x)^3 + S(x)
+function _generate_blocks!(states::Vector{Fockstate{Length}}; N_filter = Int[], S_filter = Int[]) where {Length}
+    sort_f(x::Fockstate) = N_el(x)*2*Length + S(x)
+    filter!(x->    (isempty(N_filter) || (N_el(x) in N_filter)) 
+                && (isempty(S_filter) || (S(x) in S_filter)), states)
+    isempty(states) && throw(ArgumentError("Filter condition for quantum numbers produced empty basis!"))
     sort!(states, by=sort_f)
     blocks = Vector{Blockinfo}(undef, 0)
 

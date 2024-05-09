@@ -58,9 +58,7 @@ function Eigenspace(
         end
         verbose && (
             done = lpad(
-                round(100 * (el[1] + el[2]) / length(basis.states), digits=1),
-                5,
-                " ",
+                round(100 * (el[1] + el[2]) / length(basis.states), digits=1),5," ",
             )
         )
         verbose && print("\rGenerating Eigenspace: $(done)% done.")

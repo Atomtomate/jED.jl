@@ -26,6 +26,12 @@ end
     end
 end
 
+@testset "Filter Basis" begin
+    @test_throws ArgumentError jED.Basis(2, N_filter=[-2], S_filter=[]) 
+    @test all(jED.N_el.(jED.Basis(2, N_filter=[0], S_filter=[]).states) .== 0)
+    @test all(jED.S.(jED.Basis(2, N_filter=[], S_filter=[0]).states) .== 0)
+end
+
 @testset "Internals" begin
     @test all(jED._block_slice((4,6,1,1)) .== 4:9)
 end

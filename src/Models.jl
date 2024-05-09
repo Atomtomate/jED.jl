@@ -96,8 +96,9 @@ end
 
 """
     Hubbard{NSites,T} <: Model
-    Hubbard(t::AbstractMatrix, U::AbstractMatrix, μ::Float64)
-    Hubbard(t::Number, U::Number, μ::Number, NSites::Int, pb = false) 
+    Hubbard(t::AbstractMatrix, U::AbstractMatrix)
+    Hubbard_Chain(t::Number, U::Number,NSites::Int; pb=false)
+    Hubbard_Full(t::Number, U::Number, NSites::Int)
 
 Type for the Hubbard model. A model can be used to construct a [`Eigenspace`](@ref Eigenspace) given
 a set of [`Basis`](@ref Basis).
@@ -118,24 +119,32 @@ AIM{3, Float64}([
 struct Hubbard{NSites,T} <: Model
     tMatrix::SMatrix{NSites,NSites,T}
     UMatrix::SMatrix{NSites,NSites,T}
-    μ::Float64
 
-    function Hubbard(t::Number, U::Number, μ::Number, NSites::Int, pb=false)
-        tMatrix = diagm(NSites, NSites, 1 => repeat([t], NSites - 1), -1 => repeat([t], NSites - 1))
-        UMatrix = diagm(NSites, NSites, 0 => repeat([U], NSites))
-        Hubbard{eltype(t)}(tMatrix, UMatrix, μ)
-    end
+    Hubbard(t::AbstractMatrix, U::AbstractMatrix) = Hubbard{eltype(t)}(t, U)
 
-    Hubbard(t::AbstractMatrix, U::AbstractMatrix, μ::Number) = Hubbard{eltype(t)}(t, U, μ)
-
-    function Hubbard{T}(tMatrix::AbstractMatrix, UMatrix::AbstractMatrix, μ::Float64) where {T}
+    function Hubbard{T}(tMatrix::AbstractMatrix, UMatrix::AbstractMatrix) where {T}
         NSites = size(tMatrix, 1)
         new{NSites,T}(
             SMatrix{NSites,NSites,T}(tMatrix),
-            SMatrix{NSites,NSites,T}(UMatrix),
-            μ,
+            SMatrix{NSites,NSites,T}(UMatrix)
         )
     end
+end
+
+function Hubbard_Chain(t::Number, U::Number, NSites::Int; pb=false)
+    tMatrix = diagm(NSites, NSites, 1 => repeat([t], NSites - 1), -1 => repeat([t], NSites - 1))
+    if pb
+        tMatrix[1,end] = t
+        tMatrix[end,1] = t
+    end
+    UMatrix = diagm(NSites, NSites, 0 => repeat([U], NSites))
+    Hubbard{eltype(t)}(tMatrix, UMatrix)
+end
+
+function Hubbard_Full(t::Number, U::Number, NSites::Int)
+    tMatrix = -t*ones(NSites,NSites) + t*I
+    UMatrix = diagm(NSites, NSites, 0 => repeat([U], NSites))
+    Hubbard{eltype(t)}(tMatrix, UMatrix)
 end
 
 
