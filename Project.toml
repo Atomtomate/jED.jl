@@ -1,19 +1,22 @@
 name = "jED"
 uuid = "97545629-2858-4d6a-8329-5c595e37ec1c"
 authors = ["Julian Stobbe"]
-version = "0.12.1"
+version = "0.12.2"
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Dispersions = "9451dd48-6b2a-4bde-a443-9ec270a37806"
 EquivalenceClassesConstructor = "b0d053df-94a8-4c0c-9762-4584a2fcd8b0"
+FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
 GenericLinearAlgebra = "14197337-ba66-59df-a3e3-ca00e7dcff7a"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
+Memoization = "6fafb56a-5788-4b4e-91ca-c0cea6611c73"
 MultiFloats = "bdf0d083-296b-4888-a5b6-7498122e68a5"
+NLSolvers = "337daf1e-9722-11e9-073e-8b9effe078ba"
 NLsolve = "2774e3e8-f4cf-5e23-947b-6d7e65073b56"
 OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"

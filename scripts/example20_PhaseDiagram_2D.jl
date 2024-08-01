@@ -3,6 +3,11 @@ Pkg.activate(joinpath(@__DIR__,".."))
 using jED
 using TimerOutputs
 to = TimerOutput()
+using NLsolve
+using FiniteDiff
+using NLSolvers
+using LsqFit
+using Memoization
 
 #jED.show(stdout,MIME("text/plain"),basis)
 
@@ -21,12 +26,15 @@ function DMFT_Loop(U::Float64, μ::Float64, β::Float64; maxit = 20)
     ΣImp_i = nothing
     dens = NaN
     d = NaN
+    Nup=NaN
+    Ndo=NaN
 
     kG     = jED.gen_kGrid("3Dsc-$tsc", Nk)
     basis  = jED.Basis(length(Vₖ) + 1);
     overlap= Overlap(basis, create_op(basis, 1)) # optional
     νnGrid = jED.OffsetVector([1im * (2*n+1)*π/β for n in 0:Nν-1], 0:Nν-1)
-        
+    N =   length(ϵₖ)
+
     for i in 1:maxit
         model  = AIM(p.ϵₖ, p.Vₖ, μ, U)
         G0W    = GWeiss(νnGrid, μ, p)
@@ -55,16 +63,25 @@ end
 U = 0.01
 μ = 0.005
 β = 20.0
-p, νnGrid, GImp, ΣImp, dens = DMFT_Loop(U, μ, β, maxit = 30);
+pp, νnGrid, GImp, ΣImp, dens = DMFT_Loop(U, μ, β, maxit = 30);
+
+##################################################################
 
 
-model  = AIM(p.ϵₖ,p.Vₖ, μ, U);
-basis  = jED.Basis(length(p.Vₖ) + 1);
+
+
+
+
+
+
+##################################################################
+model  = AIM(pp.ϵₖ,pp.Vₖ, μ, U);
+basis  = jED.Basis(length(pp.Vₖ) + 1);
 es     = Eigenspace(model, basis);
 
 d= jED.calc_D(es, β, basis, model.impuritySiteIndex)
 
-N= jED.calc_N(es, β, basis, model.impuritySiteIndex)
+Nup= jED.calc_Nup(es, β, basis, model.impuritySiteIndex)
+Ndo= jED.calc_Ndo(es, β, basis, model.impuritySiteIndex)
 
-
-println("d=$d    N=$N")
+println("d=$d    Nup=$Nup     Ndo=$Ndo")

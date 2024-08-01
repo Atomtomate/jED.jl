@@ -80,18 +80,19 @@ Calculates double occupancy of site `index`.
 
 
  """
-    calc_N(es::Eigenspace, β::Float64, basis::Basis{Length}, index::Int)::Float64 where Length
+    calc_Nup(es::Eigenspace, β::Float64, basis::Basis{Length}, index::Int)::Float64 where Length
 
-Calculates density of site `index`.
+Calculates density of site `index` for up electrons.
 """
- function calc_N(es::Eigenspace, β::Float64, basis::Basis{Length}, index::Int)::Float64 where Length
+ function calc_Nup(es::Eigenspace, β::Float64, basis::Basis{Length}, index::Int)::Float64 where Length
     Z::Float64 = calc_Z(es, β)
     N::Float64 = 0.0
+
     for bl_i in 1:length(basis.blocklist)
         sl = _block_slice(basis.blocklist[bl_i])
         for ii in sl
             for (j,jj) in enumerate(sl)
-                if basis.states[jj][index] | basis.states[jj][index + Int(Length / 2)]
+                if basis.states[jj][index]
                     N += es.evecs[ii][j] ^ 2 *  exp.(-β * es.evals[ii])
                 end
             end
@@ -99,3 +100,27 @@ Calculates density of site `index`.
     end
     return N/Z
  end
+
+
+
+ """
+ calc_Ndown(es::Eigenspace, β::Float64, basis::Basis{Length}, index::Int)::Float64 where Length
+
+Calculates density of site `index` for down electrons.
+"""
+function calc_Ndo(es::Eigenspace, β::Float64, basis::Basis{Length}, index::Int)::Float64 where Length
+ Z::Float64 = calc_Z(es, β)
+ N::Float64 = 0.0
+
+ for bl_i in 1:length(basis.blocklist)
+     sl = _block_slice(basis.blocklist[bl_i])
+     for ii in sl
+         for (j,jj) in enumerate(sl)
+             if basis.states[jj][index + Int(Length / 2)]
+                 N += es.evecs[ii][j] ^ 2 *  exp.(-β * es.evals[ii])
+             end
+         end
+     end
+ end
+ return N/Z
+end
