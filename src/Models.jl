@@ -48,6 +48,8 @@ Can be created from
   - impurity chemical potential ``\\mu``
   - Coulomb interaction strength on the impurity ``U``
 
+This model uses state `1` (i.e. index `1` and index `N+1`) of each [`Fockstate`](@ref Fockstate) as impurity.
+
 # Example
 ```
 julia> ϵₖ = [0.5, -5.0]
@@ -66,6 +68,7 @@ struct AIM{NSites,T} <: Model
     params::AIMParams
     μ::Float64
     U::Float64
+    impuritySiteIndex::Int
 
     AIM(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Float64, U::Float64) = AIM{eltype(Vₖ)}(ϵₖ, Vₖ, μ, U)
 
@@ -89,6 +92,7 @@ struct AIM{NSites,T} <: Model
             AIMParams(ϵₖ, Vₖ),
             μ,
             U,
+            1,
         )
     end
 end

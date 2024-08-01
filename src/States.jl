@@ -14,6 +14,10 @@
     Fockstate
 
 Internal representation of a Fockstate.
+
+Fockstates of a basis with `N` electrons are represented by a vector of `2N` Booleans.
+The first half is 1, if the corresponding state has a spin up electron at that position,
+the second half corresponds to spin down electrons.
 """
 const Fockstate = SVector{Length,Bool} where {Length}
 const Blockinfo = NTuple{4,Int}

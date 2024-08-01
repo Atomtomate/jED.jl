@@ -49,30 +49,53 @@ end
 # end
 #
 # """
-#     getNN(eigenspace)
+#  getNN(eigenspace)
 #
 # Calculate expectation value of all double occupation combinations
 # """
-# function getNN(eigenspace::Eigenspace, beta::Float64, fockstates::Fockstates)::Array{Float64,3}
-#     Nmax = fockstates.norb*2
-#     Z = getZ(eigenspace, beta)
-#     nn = zeros(Float64,3,fockstates.norb,fockstates.norb)  # Nup*Ndn, Nup*Nup, Ndn*Ndn as orbital matrix
-#     for n=0:Nmax
-#         for s=1:noSpinConfig(n,Nmax)
-#             dim = length(eigenspace.evals[n+1][s])
-#             for i=1:dim
-#                 for j=1:dim
-#                     weight = abs(eigenspace.evecs[n+1][s][i][j])^2 * exp(-beta*(eigenspace.evals[n+1][s][i]-eigenspace.E0)) # entry in Eigenvector * Boltzmann factor
-#                     for m1=1:fockstates.norb
-#                         for m2=1:fockstates.norb
-#                             nn[1,m1,m2] += weight * fockstates.states[n+1][s][j][2*m1-1] * fockstates.states[n+1][s][j][2*m2-0] 
-#                             nn[2,m1,m2] += weight * fockstates.states[n+1][s][j][2*m1-1] * fockstates.states[n+1][s][j][2*m2-1] 
-#                             nn[3,m1,m2] += weight * fockstates.states[n+1][s][j][2*m1-0] * fockstates.states[n+1][s][j][2*m2-0] 
-#                         end # m2
-#                     end # m1
-#                 end # j
-#             end # i
-#         end # s
-#     end # n
-#     return nn/Z
-# end
+
+"""
+    calc_D(es::Eigenspace, β::Float64, basis::Basis{Length}, index::Int)::Float64 where Length
+
+
+Calculates double occupancy of site `index`.
+"""
+ function calc_D(es::Eigenspace, β::Float64, basis::Basis{Length}, index::Int)::Float64 where Length
+    Z = calc_Z(es, β)
+    D = 0.0
+    for bl_i in 1:length(basis.blocklist)
+        sl = _block_slice(basis.blocklist[bl_i])
+        for ii in sl
+            #TODO: onlz caclcuate this once
+            for (j,jj) in enumerate(sl)
+                if basis.states[jj][index] & basis.states[jj][index + Int(Length / 2)]
+                    D += es.evecs[ii][j] ^ 2 *  exp.(-β * es.evals[ii])
+                end
+            end
+        end
+    end
+    return D/Z
+ end
+
+
+
+ """
+    calc_N(es::Eigenspace, β::Float64, basis::Basis{Length}, index::Int)::Float64 where Length
+
+Calculates density of site `index`.
+"""
+ function calc_N(es::Eigenspace, β::Float64, basis::Basis{Length}, index::Int)::Float64 where Length
+    Z::Float64 = calc_Z(es, β)
+    N::Float64 = 0.0
+    for bl_i in 1:length(basis.blocklist)
+        sl = _block_slice(basis.blocklist[bl_i])
+        for ii in sl
+            for (j,jj) in enumerate(sl)
+                if basis.states[jj][index] | basis.states[jj][index + Int(Length / 2)]
+                    N += es.evecs[ii][j] ^ 2 *  exp.(-β * es.evals[ii])
+                end
+            end
+        end
+    end
+    return N/Z
+ end

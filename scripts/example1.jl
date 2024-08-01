@@ -1,8 +1,9 @@
 using Pkg
 Pkg.activate(joinpath(@__DIR__,".."))
 using jED
-using TimerOutputs
-to = TimerOutput()
+
+# jED.show(stdout,MIME("text/plain"), VARIABLE)
+
 
 
 # ϵₖ = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
@@ -15,6 +16,7 @@ to = TimerOutput()
 #basis = jED.Basis(3)
 # ϵₖ = [ -0.27609287995684029, 0.27618973571133110]
 # Vₖ = [0.29192047882034178, 0.29192904949573512]
+
 
 ϵₖ = [
     1.0 ,
@@ -29,14 +31,14 @@ Vₖ = [
 U  = 3.2
 μ  = U/2 #0.6
 β  = 13.4
-@timeit to "Basis" basis = jED.Basis(length(ϵₖ)+1)
+basis = jED.Basis(length(ϵₖ)+1)
 model = AIM(ϵₖ, Vₖ, μ, U)
 
 # internally, the Hamiltonian is constructed with the follwing call.
 # This will construct the full (!) Hamiltonian when called with the full basis (not segmentd into blocks)
 # H = calc_Hamiltonian(model, basis)
 
-@timeit to "Basis Full" es = Eigenspace(model, basis);
+es = Eigenspace(model, basis);
 # @timeit to "Basis Lanczos" es2 = jED.Eigenspace_L(model, basis);
 
 νnGrid = jED.OffsetVector([1im * (2*n+1)*π/β for n in 0:2000], 0:2000)
