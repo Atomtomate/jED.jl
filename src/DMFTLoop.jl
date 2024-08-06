@@ -218,11 +218,11 @@ function fit_AIM_params!(
 
     tmp = similar(νnGrid.parent)
     p0 = vcat(p.ϵₖ, p.Vₖ)
-    N::Int = floor(Int, length(p0) / 2)
+    N::Int = length(p.ϵₖ)
 
     function GW_fit_real(νnGrid::Vector, p::Vector)::Vector{Float64}
         GWeiss!(tmp, νnGrid, μ, p[1:N], p[(N+1):end])
-        vcat(real(tmp), imag(tmp))
+        return vcat(real(tmp), imag(tmp))
     end
 
     target = vcat(real(GLoc.parent), imag(GLoc.parent))

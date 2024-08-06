@@ -23,8 +23,8 @@ abstract type Model end
 Parameters for energy levels (``\\epsilon_k``) and hybridization amplitudes (``V_k``) of the Anderson impurity model.
 """
 mutable struct AIMParams
-    ϵₖ::Vector{Float64}
-    Vₖ::Vector{Float64}
+    ϵₖ::Vector
+    Vₖ::Vector
 end
 
 function AIMParams(p_vec::Vector)
@@ -66,13 +66,13 @@ struct AIM{NSites,T} <: Model
     UMatrix::SMatrix{NSites,NSites,T}
     JMatrix::SMatrix{NSites,NSites,T}
     params::AIMParams
-    μ::Float64
+    μ::Number
     U::Float64
     impuritySiteIndex::Int
 
-    AIM(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Float64, U::Float64) = AIM{eltype(Vₖ)}(ϵₖ, Vₖ, μ, U)
+    AIM(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Number, U::Float64) = AIM{eltype(Vₖ)}(ϵₖ, Vₖ, μ, U)
 
-    function AIM{T}(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Float64, U::Float64) where {T}
+    function AIM{T}(ϵₖ::AbstractVector, Vₖ::AbstractVector, μ::Number, U::Float64) where {T}
         length(ϵₖ) != length(Vₖ) && throw(
             ArgumentError(
                 "length of ϵₖ $(length(ϵₖ)) must be equal to length of Vₖ $(length(Vₖ))!",

@@ -1,0 +1,108 @@
+  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 25:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 3:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 16:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 23:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 19:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 24:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 12:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 11:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 17:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 13:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 14:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 22:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 10:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 18:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 5:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 9:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 20:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 15:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 8:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 6:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 21:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 4:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 2:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+      From worker 7:	  Activating project at `/scratch/projects/hhp00048/codes/jED.jl`
+Total length: 16200000
+check: 16200000
+optaining results from worker 1
+      From worker 2:	small = 297268 (0.44039703703703703)
+      From worker 2:	large = 0 (0.0)
+optaining results from worker 2
+      From worker 3:	small = 260228 (0.38552296296296296)
+      From worker 3:	large = 0 (0.0)
+      From worker 24:	small = 0 (0.0)
+      From worker 24:	large = 205890 (0.3050222222222222)
+      From worker 4:	small = 214855 (0.3183037037037037)
+      From worker 4:	large = 0 (0.0)
+      From worker 23:	small = 0 (0.0)
+      From worker 23:	large = 201388 (0.2983525925925926)
+      From worker 25:	small = 0 (0.0)
+      From worker 25:	large = 224937 (0.33324)
+optaining results from worker 3
+      From worker 22:	small = 0 (0.0)
+      From worker 22:	large = 192776 (0.28559407407407406)
+      From worker 5:	small = 164635 (0.2439037037037037)
+      From worker 5:	large = 0 (0.0)
+optaining results from worker 4
+      From worker 6:	small = 115075 (0.17048148148148148)
+      From worker 6:	large = 0 (0.0)
+      From worker 21:	small = 0 (0.0)
+      From worker 21:	large = 171975 (0.25477777777777777)
+optaining results from worker 5
+      From worker 7:	small = 73280 (0.10856296296296296)
+      From worker 7:	large = 0 (0.0)
+      From worker 20:	small = 0 (0.0)
+      From worker 20:	large = 128375 (0.19018518518518518)
+      From worker 19:	small = 0 (0.0)
+      From worker 19:	large = 35443 (0.05250814814814815)
+      From worker 8:	small = 75310 (0.11157037037037038)
+      From worker 8:	large = 0 (0.0)
+optaining results from worker 6
+      From worker 12:	small = 0 (0.0)
+      From worker 12:	large = 0 (0.0)
+      From worker 11:	small = 0 (0.0)
+      From worker 11:	large = 0 (0.0)
+      From worker 9:	small = 2932 (0.004343703703703704)
+      From worker 9:	large = 0 (0.0)
+      From worker 17:	small = 0 (0.0)
+      From worker 17:	large = 1725 (0.0025555555555555557)
+      From worker 10:	small = 0 (0.0)
+      From worker 10:	large = 0 (0.0)
+      From worker 18:	small = 0 (0.0)
+      From worker 18:	large = 41074 (0.06085037037037037)
+      From worker 13:	small = 0 (0.0)
+      From worker 13:	large = 0 (0.0)
+optaining results from worker 7
+      From worker 16:	small = 0 (0.0)
+      From worker 16:	large = 0 (0.0)
+      From worker 14:	small = 0 (0.0)
+      From worker 14:	large = 0 (0.0)
+optaining results from worker 8
+      From worker 15:	small = 0 (0.0)
+      From worker 15:	large = 0 (0.0)
+optaining results from worker 9
+optaining results from worker 10
+optaining results from worker 11
+optaining results from worker 12
+optaining results from worker 13
+optaining results from worker 14
+optaining results from worker 15
+optaining results from worker 16
+optaining results from worker 17
+optaining results from worker 18
+optaining results from worker 19
+optaining results from worker 20
+optaining results from worker 21
+optaining results from worker 22
+optaining results from worker 23
+optaining results from worker 24
+disregarded 14.859049382716051 % of generated samples
+============ Job Information ===================================================
+Submitted: 2024-04-25T15:10:37
+Started: 2024-04-25T15:10:37
+Ended: 2024-04-25T15:35:49
+Elapsed: 26 min, Limit: 60 min, Difference: 34 min
+(HT-)CPUs: 192, Nodes: 1
+Estimated core-h: 40.2987
+================================================================================

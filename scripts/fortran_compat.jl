@@ -12,9 +12,9 @@ NBathSites = parse(Int, ARGS[4])
 KGridStr   = ARGS[5]
 path       = ARGS[6]
 
-Nν::Int    = 1000 
-maxit::Int = 20
-abs_conv::Float64 = 1e-8
+Nν::Int    = 3000 
+maxit::Int = 500
+abs_conv::Float64 = 1e-9
 
 """
     DMFT_Loop(U::Float64, μ::Float64, β::Float64, NBathSites::Int, KGridStr::String; 
