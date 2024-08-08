@@ -37,6 +37,7 @@ include("Observables.jl")
 include("GreensFunctions.jl")
 include("DMFTLoop.jl")
 include("IO.jl")
+include("AndersonParamsFit.jl")
 
 
 end
