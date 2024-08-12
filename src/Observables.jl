@@ -124,3 +124,29 @@ function calc_Ndo(es::Eigenspace, β::Float64, basis::Basis{Length}, index::Int)
  end
  return N/Z
 end
+
+function calc_EKin_DMFT(iνₙ, ϵₖ, Vₖ, GImp, n, U, β, μ)
+    E_kin = 0.0
+    vk = sum(Vₖ .^ 2)
+    E_kin_tail = vk
+    for n in axes(GImp,1)
+        Δ_n = sum((Vₖ .^ 2) ./ (iνₙ[n] .- ϵₖ))
+        E_kin += 2*real(GImp[n] * Δ_n - E_kin_tail/(iνₙ[n]^2))
+    end
+    E_kin = E_kin .* (2/β) - (β/2) .* E_kin_tail
+    return E_kin
+end
+
+function calc_EPot_DMFT(iνₙ, ϵₖ, Vₖ, GImp, n, U, β, μ)
+    E_pot = 0.0
+    Σ_hartree = n * U/2
+    E_pot_tail = (U^2)/2 * n * (1-n/2) - Σ_hartree*(Σ_hartree-μ)
+
+    for n in axes(GImp,1)
+        Δ_n = sum((Vₖ .^ 2) ./ (iνₙ[n] .- ϵₖ))
+        Σ_n = iνₙ[n] .- Δ_n .- 1.0 ./ GImp[n] .+ μ
+        E_pot += 2*real(GImp[n] * Σ_n - E_pot_tail/(iνₙ[n]^2))
+    end
+    E_pot = E_pot .* (1/β) .+ 0.5*Σ_hartree .- (β/4) .* E_pot_tail
+    return E_pot
+end

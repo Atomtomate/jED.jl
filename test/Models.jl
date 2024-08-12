@@ -25,8 +25,8 @@ end
     UMatrix = [3.0 0.0 0.0;
                0.0 3.0 0.0;
                0.0 0.0 3.0]
-    model = Hubbard(t, U, μ, 3)
-    model2 = Hubbard(tMatrix, UMatrix, μ)
+    model = Hubbard_Chain(t, U, 3)
+    model2 = Hubbard(tMatrix, UMatrix)
     for el in fieldnames(typeof(model))
         @test all(getproperty(model,el) .== getproperty(model2,el))
     end

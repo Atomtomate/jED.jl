@@ -12,7 +12,9 @@ U  = 1.0
 β  = 10.0
 model = AIM(ϵₖ, Vₖ, μ, U)
 H_test = jED.calc_Hamiltonian(model, s_test)
-es = Eigenspace(model,basis)
+es = Eigenspace(model,basis,verbose=false)
+νnGrid = [(2*n+1)*π/β for n in 0:1500]
+GImp,nden = calc_GF_1(basis, es, νnGrid, β; with_density=true)
 
 @testset "states" begin
     include("States.jl")
