@@ -1,0 +1,164 @@
+# ==================================================================================================== #
+#                                            mu_scan.jl                                                #
+# ---------------------------------------------------------------------------------------------------- #
+#   Authors         : Julian Stobbe                                                                    #
+# ----------------------------------------- Description ---------------------------------------------- #
+#   Runs through a range of mu values and computes DMFT soutions.                                      #
+#   Returns: DataFrame with U, β, Nk, NBathSites, μ, n, AndParCheck1, ..., AndparCheck4,               #
+#              eps_l, ..., V_l, ..., fit_converged_flag                                                #
+#   Arguments:                                                                                         #
+#      (1) : `Int`    : Number of bath sites                                                           #
+#      (2) : `Float64`: μ range start                                                                  #
+#      (3) : `Float64`: μ range stop                                                                   #
+#      (4) : `Int`    : number of μ steps                                                              #
+#      (5) : `Float64`: Hubbard U                                                                      #
+#      (6) : `Float64`: inverse temperature β                                                          #
+#      (7) : `String` : KGrid string (see Dispersions.jl)                                              #
+#      (8) : `Int`    : Number of k-points in each dimension                                           #
+#      (9) : `Int`    : Numver of positive fermionic Matsubara frequencies                             #
+# -------------------------------------------- TODO -------------------------------------------------- #
+# ==================================================================================================== #
+
+using Pkg
+Pkg.activate(joinpath(@__DIR__,".."))
+using jED
+using ForwardDiff
+using Optim
+using TimerOutputs
+using DataFrames, CSV
+
+
+
+NSites = parse(Int,ARGS[1])
+μ_range = LinRange(parse(Float64,ARGS[2]),parse(Float64,ARGS[3]), parse(Int,ARGS[4]))
+U  = parse(Float64,ARGS[5])
+β  = parse(Float64,ARGS[6])
+kGstr = ARGS[7]
+Nk = parse(Int, ARGS[8])
+Nν = parse(Int, ARGS[9])
+# push!(ARGS, ["5", "0.5","1.0", "100", "2.0", "40.0", "2Dsc-0.25-0.075-0.05", "200", "2000"]...)
+
+
+df = DataFrame(U=Float64[], β=Float64[], Nk=Int[], NBathSites=Int[], μ=Float64[], n=Float64[], DMFT_Converged=Bool[], Fit_Converged=Bool[], min_epsk_diff=Float64[], min_Vk=Float64[], min_eps=Float64[], sum_Vk=Float64[], eps_l=[], v_l=[])
+
+
+function andpar_check_values(ϵₖ, Vₖ)
+    NSites = length(ϵₖ)
+    min_epsk_diff = Inf
+    min_Vₖ = minimum(abs.(Vₖ))
+    min_eps = minimum(abs.(ϵₖ))
+    sum_vk = sum(Vₖ .^ 2)
+    for i in 1:NSites
+        for j in i+1:NSites
+            if abs(ϵₖ[i] - ϵₖ[j]) < min_epsk_diff
+                min_epsk_diff = abs(ϵₖ[i] - ϵₖ[j])
+            end
+        end
+    end
+    return sum_vk, min_epsk_diff, min_Vₖ, min_eps
+end
+
+function run_DMFT(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float64, μ_in::Float64, β::Float64, fitf::Function; maxit = 2000, eps_abs::Float64=1e-9)
+    α   = 0.4
+    kG     = jED.gen_kGrid(kGstr,Nk) #"3Dsc-$tsc", Nk)
+    νnGrid = jED.OffsetVector([1im * (2*n+1)*π/β for n in 0:Nν-1], 0:Nν-1)
+    basis  = jED.Basis(NSites+1);
+    overlap= Overlap(basis, create_op(basis, 1)) # optional
+
+    ϵₖ = vcat(randn(trunc(Int,NSites/2)) .* U .+ U,  randn(trunc(Int,NSites/2)) .* U .- U,  repeat([0.2], NSites%2))
+    Vₖ = randn(NSites) ./ 100.0 .+ 0.17
+    p  = AIMParams(ϵₖ, Vₖ)
+    dens = NaN
+
+    GImp_i = nothing
+    GImp_i_old = nothing
+    ΣImp_i = nothing
+    fit_res = nothing
+    fit_err = NaN
+    converged = false
+    μ = μ_in
+    it_check = -1
+    for i in 1:maxit
+        model  = AIM(p.ϵₖ, p.Vₖ, μ, U)
+        G0W    = GWeiss(νnGrid, μ, p)
+        es     = Eigenspace(model, basis, verbose=false);
+        isnothing(GImp_i_old) ? GImp_i_old = deepcopy(GImp_i) : copyto!(GImp_i_old, GImp_i)
+        GImp_i, dens = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=1e-13, overlap=overlap, with_density=false)
+        Nup = calc_Nup(es, β, basis, model.impuritySiteIndex)
+        Ndo = calc_Ndo(es, β, basis, model.impuritySiteIndex)
+        dens = Nup + Ndo
+        !isnothing(GImp_i_old) && (GImp_i = α .* GImp_i .+ (1-α) .* GImp_i_old)
+        !isnothing(GImp_i_old) && sum(abs.(GImp_i_old .- GImp_i)) < 1e-8 && break
+        ΣImp_i = Σ_from_GImp(G0W, GImp_i)
+
+        GLoc_i = GLoc(ΣImp_i, μ, νnGrid, kG)
+        fit_res = fitf(p, μ, GLoc_i, νnGrid)
+        vals = Optim.converged(fit_res) ? Optim.minimizer(fit_res) : nothing
+        isnothing(vals) && (@warn("Could not fit, aborting DMFT loop!"); break)
+        p = AIMParams(vals[1:NSites], vals[NSites+1:end])
+        sum_vk, min_eps_diff, min_vk, min_eps = andpar_check_values(vals[1:NSites], vals[NSites+1:end])
+
+        tmp = 1 ./ (νnGrid.parent .+ μ .- sum((p.Vₖ .^ 2) ./ (reshape(νnGrid.parent,1,length(νnGrid)) .- p.ϵₖ), dims=1)[1,:])
+        fit_err = sum(abs.(GLoc_i.parent .- tmp))
+        fit_err < eps_abs && (converged = true)
+        it_check = i
+        converged && break
+    end
+
+    vals = Optim.converged(fit_res) ? Optim.minimizer(fit_res) : nothing
+    row = if !isnothing(vals)
+        sum_vk, min_eps_diff, min_vk, min_eps = andpar_check_values(vals[1:NSites], vals[NSites+1:end])
+        println(rpad("=========== μ = $μ , dens = $dens  =========",80,"="))
+        println("   Converged = ", Optim.converged(fit_res), ", after $it_check iterations")
+        println("       Error = ", fit_err, " // Error after trafo = ", Optim.minimum(fit_res))
+        println("   1. min(|Vₖ|)      = ", min_vk)
+        println("   2. ∑Vₗ^2          = ", sum_vk)
+        println("   3. min(|ϵₖ|)      = ", min_eps)
+        println("   4. min(|ϵₖ - ϵₗ|) = ", min_eps_diff)
+        println("   Solution :    ϵₖ = $(lpad.(round.(vals[1:NSites],digits=4),9)...)")
+        println("                 Vₖ = $(lpad.(round.(vals[NSites+1:end],digits=4),9)...)")
+        println(repeat("=",80))
+        [U, β, Nk, NSites, μ, dens, converged, !isnothing(vals), min_eps_diff, min_vk, min_eps, sum_vk, vals[1:NSites], vals[NSites+1:end]]
+    else
+        println(rpad("=========== μ = $μ , dens = $dens =========",80,"="))
+        println("   ERROR: DID NOT CONVERGE!")
+        println(repeat("=",80))
+        [U, β, Nk, NSites, μ, dens, converged, !isnothing(vals), repeat([NaN], 4)..., Float64[], Float64[]]
+    end
+    push!(resDF, row)
+
+    return p, νnGrid, GImp_i, ΣImp_i, μ, dens, fit_res
+end
+
+
+
+function run_scan!(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float64, μ_range::AbstractVector, β::Float64; maxit = 5000)
+    i = 1
+    cf(x, y) = 1 ./ (y .* sqrt.(abs.(x)))
+    opt = BFGS()
+    opts  = Optim.Options(iterations=3000,store_trace = false,
+                             show_trace = false,
+                             show_warnings = true)
+    dist_f  = jED.square_dist
+    function fitf(pAIM::AIMParams, μ, GLoc_i, νnGrid)
+        p0 = vcat(pAIM.ϵₖ, pAIM.Vₖ)
+        function wrap_cost(p::Vector)
+            GW_i = cf(νnGrid.parent, 1 ./ (νnGrid.parent .+ μ .- sum((p[NSites+1:end] .^ 2) ./ (reshape(νnGrid.parent,1,length(νnGrid)) .- p[1:NSites]), dims=1)[1,:]))
+            GW_i = vcat(real(GW_i),imag(GW_i))
+            GL_i = cf(νnGrid.parent, GLoc_i.parent)
+            GL_i = vcat(real(GL_i),imag(GL_i))
+            return dist_f(GL_i .- GW_i)
+        end
+        result = optimize(wrap_cost, p0, opt, opts; autodiff = :forward)
+        return  result
+    end
+    for μ_i in μ_range
+        run_DMFT(resDF, kGstr, Nk, Nν, NSites, U, μ_i, β, fitf; maxit = maxit)
+    end
+    i += 1
+
+    return nothing
+end
+
+
+run_scan!(df, kGstr, Nk, Nν, NSites, U, μ_range, β; maxit = 2000)
