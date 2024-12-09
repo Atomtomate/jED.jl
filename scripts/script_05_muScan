@@ -17,6 +17,7 @@
 #      (8) : `Int`    : Number of k-points in each dimension                                           #
 #      (9) : `Int`    : Numver of positive fermionic Matsubara frequencies                             #
 #     (10) : `Float64`: U for Anderson start (i.e. start scan in MI or Metal)                          #
+#     (11) : `String` : Output file name                                                               #
 # -------------------------------------------- TODO -------------------------------------------------- #
 # ==================================================================================================== #
 
@@ -38,7 +39,8 @@ kGstr = ARGS[7]
 Nk = parse(Int, ARGS[8])
 Nν = parse(Int, ARGS[9])
 UStart = parse(Float64, ARGS[10])
-# push!(ARGS, ["5", "0.5","1.0", "100", "3.0", "40.0", "2Dsc-0.25-0.075-0.05", "200", "2000", "0.1"]...)
+fname = ARGS[11]
+# push!(ARGS, ["5", "0.5","1.0", "100", "3.0", "40.0", "2Dsc-0.25-0.075-0.05", "200", "2000", "0.1", "NB_5.csv"]...)
 head = "╔═════════════════════ SETUP ════════════════════════╗"
 rpl = length(head)-1
 println(head)
@@ -92,7 +94,7 @@ function run_DMFT(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float
         G0W    = GWeiss(νnGrid, μ, p)
         es     = Eigenspace(model, basis, verbose=false);
         isnothing(GImp_i_old) ? GImp_i_old = deepcopy(GImp_i) : copyto!(GImp_i_old, GImp_i)
-        GImp_i, dens = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=1e-13, overlap=overlap, with_density=true) #1e-13
+        GImp_i, dens = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=1e-13, overlap=overlap, with_density=true)
         !isnothing(GImp_i_old) && (GImp_i = α .* GImp_i .+ (1-α) .* GImp_i_old)
         !isnothing(GImp_i_old) && sum(abs.(GImp_i_old .- GImp_i)) < eps_abs && (converged = true)
         ΣImp_i = Σ_from_GImp(G0W, GImp_i)
@@ -110,17 +112,18 @@ function run_DMFT(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float
 
     vals = Optim.converged(fit_res) ? Optim.minimizer(fit_res) : nothing
     row = if !isnothing(vals)
+        rpl = 80
         sum_vk, min_eps_diff, min_vk, min_eps = andpar_check_values(vals[1:NSites], vals[NSites+1:end])
-        println(rpad("=========== μ = $μ , dens = $dens  =========",80,"="))
-        println("   Converged = ", Optim.converged(fit_res), ", after $it_check iterations")
-        println("       Error = ", fit_err, " // Error after trafo = ", Optim.minimum(fit_res))
-        println("   1. min(|Vₖ|)      = ", min_vk)
-        println("   2. ∑Vₗ^2          = ", sum_vk)
-        println("   3. min(|ϵₖ|)      = ", min_eps)
-        println("   4. min(|ϵₖ - ϵₗ|) = ", min_eps_diff)
-        println("   Solution :    ϵₖ = $(lpad.(round.(vals[1:NSites],digits=4),9)...)")
-        println("                 Vₖ = $(lpad.(round.(vals[NSites+1:end],digits=4),9)...)")
-        println(repeat("=",80))
+        println(rpad("╔══════════ μ = $μ , dens = $dens  ═════════",rpl-1,"═").*"═╗")
+        println(rpad("║   Converged =  $(Optim.converged(fit_res)) after $it_check iterations",rpl-1," ")   *"║")
+        println(rpad("║       Error =  $fit_err // Error after trafo = $(Optim.minimum(fit_res))",rpl-1," ")    *"║")
+        println(rpad("║   1. min(|Vₖ|)     = $min_vk",rpl-1," ")          *"║")
+        println(rpad("║   2. ∑Vₗ^2         = $sum_vk",rpl-1," ")          *"║")
+        println(rpad("║   3. min(|ϵₖ|)     = $sum_vk",rpl-1," ")          *"║")
+        println(rpad("║   4. min(|ϵₖ - ϵₗ|) = $sum_vk",rpl-1," ")         *"║")
+        println(rpad("║   Solution :    ϵₖ = $(lpad.(round.(vals[1:NSites],digits=4),9)...)",rpl-1," ")  *"║")
+        println(rpad("║                 Vₖ = $(lpad.(round.(vals[NSites+1:end],digits=4),9)...)",rpl," ") *"║")
+        println("╚"*repeat("═",rpl-2)*"╝")
         [U, β, kGstr, Nk, NSites, μ, dens, converged, !isnothing(vals), min_eps_diff, min_vk, min_eps, sum_vk, vals[1:NSites], vals[NSites+1:end]]
     else
         println(rpad("=========== μ = $μ , dens = $dens =========",80,"="))
@@ -136,8 +139,8 @@ end
 
 
 function run_scan!(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float64, μ_range::AbstractVector, β::Float64; maxit = 5000)
-    cf(x, y) = y #1 ./ (y .* sqrt.(abs.(x)))
-    cf2(x, y) = 1 ./ (y .* sqrt.(abs.(x)))
+    cf2(x, y) = y #1 ./ (y .* sqrt.(abs.(x)))
+    cf(x, y) = 1 ./ (y .* sqrt.(abs.(x)))
     opt = LBFGS()
     opts  = Optim.Options(iterations=20000, f_tol=1e-9, x_tol=1e-9,
                             store_trace = false,
@@ -178,4 +181,4 @@ run_scan!(df, kGstr, Nk, Nν, NSites, U, μ_range, β; maxit = 2000)
 n_axis = (df.n[2:end] .+ df.n[1:end-1]) ./ 2
 κ = (1 ./ n_axis .^ 2) .* κ_pre;
 
-CSV.write("NB_4.csv", df)
+CSV.write(fname, df)
