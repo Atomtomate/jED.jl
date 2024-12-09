@@ -112,9 +112,9 @@ function run_DMFT(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float
 
     vals = Optim.converged(fit_res) ? Optim.minimizer(fit_res) : nothing
     row = if !isnothing(vals)
-        rpl = 80
+        rpl = 84
         sum_vk, min_eps_diff, min_vk, min_eps = andpar_check_values(vals[1:NSites], vals[NSites+1:end])
-        println(rpad("╔══════════ μ = $μ , dens = $dens  ═════════",rpl-1,"═").*"═╗")
+        println(rpad("╔══════════ μ = $μ , dens = $dens  ═════════",rpl-1,"═").*"╗")
         println(rpad("║   Converged =  $(Optim.converged(fit_res)) after $it_check iterations",rpl-1," ")   *"║")
         println(rpad("║       Error =  $fit_err // Error after trafo = $(Optim.minimum(fit_res))",rpl-1," ")    *"║")
         println(rpad("║   1. min(|Vₖ|)     = $min_vk",rpl-1," ")          *"║")
@@ -122,7 +122,7 @@ function run_DMFT(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float
         println(rpad("║   3. min(|ϵₖ|)     = $sum_vk",rpl-1," ")          *"║")
         println(rpad("║   4. min(|ϵₖ - ϵₗ|) = $sum_vk",rpl-1," ")         *"║")
         println(rpad("║   Solution :    ϵₖ = $(lpad.(round.(vals[1:NSites],digits=4),9)...)",rpl-1," ")  *"║")
-        println(rpad("║                 Vₖ = $(lpad.(round.(vals[NSites+1:end],digits=4),9)...)",rpl," ") *"║")
+        println(rpad("║                 Vₖ = $(lpad.(round.(vals[NSites+1:end],digits=4),9)...)",rpl-1," ") *"║")
         println("╚"*repeat("═",rpl-2)*"╝")
         [U, β, kGstr, Nk, NSites, μ, dens, converged, !isnothing(vals), min_eps_diff, min_vk, min_eps, sum_vk, vals[1:NSites], vals[NSites+1:end]]
     else
