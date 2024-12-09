@@ -156,5 +156,3 @@ end
 
 println("Results are available in `fits` variable")
 println(to)
-
-
