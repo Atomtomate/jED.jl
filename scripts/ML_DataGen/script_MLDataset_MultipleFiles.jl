@@ -3,14 +3,18 @@ using Distributed
 @everywhere Pkg.activate(joinpath(@__DIR__,".."))
 @everywhere using jED
 @everywhere using JLD2
+using Statistics
 
-VkSamples = 35
-EkSamples = 35
-MuSamples = 20
+#Target Size: 2714708
+VkSamples = 6
+EkSamples = 6
+MuSamples = 6
 betaSamples = 1
 USamples = 1
 
-NBath = 3
+NBath = 4
+
+add_noise = true
 
 βList = [30.0] # 1 ./ LinRange(0.06,1,betaSamples)
 UList = [1.0]
@@ -22,7 +26,22 @@ V1 = LinRange(0,1.0,VkSamples)
 E1 = LinRange(-2Ui, 2Ui, EkSamples)
 μList = LinRange(-Ui, 2*Ui, MuSamples) 
 
+
+println("Constructing Parameter List")
+#fullParamList = Array{Float64, 2*NBath+3}(undef, repeat(length(E1),NBath)..., repeat(length(V1),NBath)...,length(μList),length(UList),length(βList))
 fullParamList = collect(Base.product(repeat([E1],NBath)...,repeat([V1],NBath)...,μList,UList,βList))[:]
+if add_noise
+    V_noise_level = mean(diff(V1)) / 10
+    E_noise_level = mean(diff(E1)) / 10
+    μ_noise_level = mean(diff(μList)) / 10
+    for i in eachindex(fullParamList)
+        noise_E = randn(NBath) .* E_noise_level
+        noise_V = randn(NBath) .* V_noise_level
+        noise_μ = randn()  * μ_noise_level
+        fullParamList[i] = fullParamList[i] .+ (noise_E..., noise_V..., noise_μ, 0.0, 0.0)
+    end
+end
+
 NSamples = length(fullParamList)
 println("check: ", NSamples)
 
@@ -48,6 +67,7 @@ println("check: ", NSamples)
     densList   = Vector{Float64}(undef, length(parList))
 
     for (it, el) in enumerate(parList)
+        (it % 10 == 0) && println("$(100.0*it/length(parList)) %")
         e1, e2, v1, v2, μ, U, β = el
         ϵₖ = [e1, e2]
         Vₖ = [v1, v2]
@@ -87,7 +107,7 @@ println("check: ", NSamples)
     return nothing
 end
 
-NChunks = 30
+NChunks = 1
 #NWorkers = 30#length(NChunks)
 NSamples = length(fullParamList)
 ChunkSize = ceil(Int, NSamples/NChunks)
@@ -96,7 +116,7 @@ futures = []
 wp = WorkerPool(workers())
 
 for (i,wi) in enumerate(1:NChunks)
-    push!(futures, remotecall(solve_imp, wp, fullParamList[batch_indices[i]], "batch3_nPrune", i))
+    push!(futures, remotecall(solve_imp, wp, fullParamList[batch_indices[i]], "batch_NB4_nPrune_noisy", i))
 end
 
 for (i,res) in enumerate(1:NChunks)

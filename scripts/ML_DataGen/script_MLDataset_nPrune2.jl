@@ -3,21 +3,23 @@ using Distributed
 @everywhere Pkg.activate(joinpath(@__DIR__,".."))
 @everywhere using jED
 using JLD2
+using Statistics 
 
-VkSamples = 9
-EkSamples = 9
-MuSamples = 9
+VkSamples = 6
+EkSamples = 6
+MuSamples = 6
 betaSamples = 1
 USamples = 1
 
-NBath = 3
+NBath = 4
+add_noise = true
 
 βList = [30.0] # 1 ./ LinRange(0.06,1,betaSamples)
 UList = [1.0]
 
 println("Total length: ", USamples*betaSamples*MuSamples*VkSamples^NBath*EkSamples^NBath)
 
-fn = "data_batch2_NB3_nPrune.hdf5"
+fn = "batch_NB4_nPrune_noisy.hdf5"
 Ui = UList[1]
 V1 = LinRange(0,1.0,VkSamples)
 E1 = LinRange(-2Ui, 2Ui, EkSamples)
@@ -26,7 +28,17 @@ E1 = LinRange(-2Ui, 2Ui, EkSamples)
 fullParamList = collect(Base.product(repeat([E1],NBath)...,repeat([V1],NBath)...,μList,UList,βList))[:]
 NSamples = length(fullParamList)
 println("check: ", NSamples)
-
+if add_noise
+    V_noise_level = mean(diff(V1)) / 10
+    E_noise_level = mean(diff(E1)) / 10
+    μ_noise_level = mean(diff(μList)) / 10
+    for i in eachindex(fullParamList)
+        noise_E = randn(NBath) .* E_noise_level
+        noise_V = randn(NBath) .* V_noise_level
+        noise_μ = randn()  * μ_noise_level
+        fullParamList[i] = fullParamList[i] .+ (noise_E..., noise_V..., noise_μ, 0.0, 0.0)
+    end
+end
 
 
 @everywhere function solve_imp(parList; Nν::Int = 100, NB::Int = 2, β::Float64 = 30.0, dens_eps::Float64 = 1e-1)
@@ -54,6 +66,7 @@ println("check: ", NSamples)
     small = 0
     large = 0
     for (it, el) in enumerate(parList)
+        (it % 100 == 0) && println("$(100.0*it/length(parList)) %")
         ϵₖ = collect(el[1:NB])
         Vₖ = collect(el[NB+1:2*NB])
         μ = el[2*NB+1]

@@ -69,7 +69,7 @@ function andpar_check_values(ϵₖ, Vₖ)
     return sum_vk, min_epsk_diff, min_Vₖ, min_eps
 end
 
-function run_DMFT(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float64, μ_in::Float64, β::Float64, fitf::Function; minit = 10, maxit = 2000, eps_abs::Float64=1e-13,
+function run_DMFT(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float64, μ_in::Float64, β::Float64, fitf::Function; minit = 10, maxit = 500, eps_abs::Float64=1e-11,
             ϵₖ = vcat(randn(trunc(Int,NSites/2)) .* U .+ U,  randn(trunc(Int,NSites/2)) .* U .- U,  repeat([0.2], NSites%2)),
             Vₖ = randn(NSites) ./ 100.0 .+ 0.17)
     α   = 0.8
@@ -94,7 +94,7 @@ function run_DMFT(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float
         G0W    = GWeiss(νnGrid, μ, p)
         es     = Eigenspace(model, basis, verbose=false);
         isnothing(GImp_i_old) ? GImp_i_old = deepcopy(GImp_i) : copyto!(GImp_i_old, GImp_i)
-        GImp_i, dens = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=1e-13, overlap=overlap, with_density=true)
+        GImp_i, dens = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=1e-10, overlap=overlap, with_density=true)
         !isnothing(GImp_i_old) && (GImp_i = α .* GImp_i .+ (1-α) .* GImp_i_old)
         !isnothing(GImp_i_old) && sum(abs.(GImp_i_old .- GImp_i)) < eps_abs && (converged = true)
         ΣImp_i = Σ_from_GImp(G0W, GImp_i)
@@ -119,8 +119,8 @@ function run_DMFT(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float
         println(rpad("║       Error =  $fit_err // Error after trafo = $(Optim.minimum(fit_res))",rpl-1," ")    *"║")
         println(rpad("║   1. min(|Vₖ|)     = $min_vk",rpl-1," ")          *"║")
         println(rpad("║   2. ∑Vₗ^2         = $sum_vk",rpl-1," ")          *"║")
-        println(rpad("║   3. min(|ϵₖ|)     = $sum_vk",rpl-1," ")          *"║")
-        println(rpad("║   4. min(|ϵₖ - ϵₗ|) = $sum_vk",rpl-1," ")         *"║")
+        println(rpad("║   3. min(|ϵₖ|)     = $min_eps",rpl-1," ")          *"║")
+        println(rpad("║   4. min(|ϵₖ - ϵₗ|) = $min_eps_diff",rpl-1," ")         *"║")
         println(rpad("║   Solution :    ϵₖ = $(lpad.(round.(vals[1:NSites],digits=4),9)...)",rpl-1," ")  *"║")
         println(rpad("║                 Vₖ = $(lpad.(round.(vals[NSites+1:end],digits=4),9)...)",rpl-1," ") *"║")
         println("╚"*repeat("═",rpl-2)*"╝")
@@ -138,7 +138,7 @@ end
 
 
 
-function run_scan!(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float64, μ_range::AbstractVector, β::Float64; maxit = 5000)
+function run_scan!(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Float64, μ_range::AbstractVector, β::Float64; maxit = 500)
     cf2(x, y) = y #1 ./ (y .* sqrt.(abs.(x)))
     cf(x, y) = 1 ./ (y .* sqrt.(abs.(x)))
     opt = LBFGS()
@@ -174,9 +174,8 @@ function run_scan!(resDF, kGstr::String, Nk::Int, Nν::Int, NSites::Int, U::Floa
     return nothing
 end
 μ_range = sort(union(LinRange(0.75, 0.965, 30), LinRange(0.969, 0.995, 10)))
-μ_range = reverse_mu ? reverse(μ_range) : μ_range
 
-run_scan!(df, kGstr, Nk, Nν, NSites, U, μ_range, β; maxit = 2000)
+run_scan!(df, kGstr, Nk, Nν, NSites, U, μ_range, β; maxit = 100)
 κ_pre = (df.n[2:end] .- df.n[1:end-1]) ./ (df.μ[2:end] .- df.μ[1:end-1])
 n_axis = (df.n[2:end] .+ df.n[1:end-1]) ./ 2
 κ = (1 ./ n_axis .^ 2) .* κ_pre;
