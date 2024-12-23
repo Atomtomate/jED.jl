@@ -8,32 +8,18 @@ using Logging
 using JLD2
 
 to = TimerOutput()
-NSites = 2
-μ  = 0.6
-U  = 2.2
-β  = parse(Float64, ARGS[1])#75.0
+NSites = 4
+β  = 40.0 #parse(Float64, ARGS[1])#75.0
+kGStr = "2Dsc-0.25-0.075-0.05"# ARGS[2]
+Nk = 200 #parse(Int, ARGS[3])
+U  = 2.2 #parse(Float64, ARGS[4])
+μ  = 0.6 #parse(Float64, ARGS[5])
 
-function andpar_check_values(ϵₖ, Vₖ)
-    NSites = length(ϵₖ)
-    min_epsk_diff = Inf
-    min_Vₖ = minimum(abs.(Vₖ))
-    min_eps = minimum(abs.(ϵₖ))
-    sum_vk = sum(Vₖ .^ 2)
-    for i in 1:NSites
-        for j in i+1:NSites
-            if abs(ϵₖ[i] - ϵₖ[j]) < min_epsk_diff
-                min_epsk_diff = abs(ϵₖ[i] - ϵₖ[j])
-            end
-        end
-    end
-    return sum_vk, min_epsk_diff, min_Vₖ, min_eps
-end
 
 function run_DMFT(NSites::Int, U::Float64, μ_in::Float64, β::Float64, fitf::Function; maxit = 20, verbose = true)
-    Nk  = 200
     Nν  = 2000
     α   = 0.4
-    kG     = jED.gen_kGrid("2Dsc-0.25-0.075-0.05",Nk) #"3Dsc-$tsc", Nk)
+    kG     = jED.gen_kGrid(kGStr,Nk) #"3Dsc-$tsc", Nk)
     νnGrid = jED.OffsetVector([1im * (2*n+1)*π/β for n in 0:Nν-1], 0:Nν-1)
     basis  = jED.Basis(NSites+1);
     overlap= Overlap(basis, create_op(basis, 1)) # optional
@@ -54,7 +40,7 @@ function run_DMFT(NSites::Int, U::Float64, μ_in::Float64, β::Float64, fitf::Fu
         G0W    = GWeiss(νnGrid, μ, p)
         es     = Eigenspace(model, basis, verbose=false);
         isnothing(GImp_i_old) ? GImp_i_old = deepcopy(GImp_i) : copyto!(GImp_i_old, GImp_i)
-        GImp_i, dens = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=1e-13, overlap=overlap, with_density=false)
+        GImp_i, dens = calc_GF_1(basis, es, νnGrid, β, ϵ_cut=1e-15, overlap=overlap, with_density=false)
         Nup = calc_Nup(es, β, basis, model.impuritySiteIndex)
         Ndo = calc_Ndo(es, β, basis, model.impuritySiteIndex)
         dens = Nup + Ndo
@@ -95,21 +81,22 @@ transf_03(x, y) = y ./ x
 transf_04(x, y) = x ./ y
 transf_05(x, y) = 1 ./ (y .* x)
 transf_06(x, y) = 1 ./ (y .* sqrt.(abs.(x)))
-transforms_list  = [transf_01, transf_02, transf_03, transf_04, transf_05, transf_06]
-transforms_names = ["y(x) → y(x)", "y(x) → 1/y(x)", "y(x) → y(x)/x", "y(x) → x/y(x)", "y(x) → 1/(y(x)x)", "y(x) → 1/(y(x)√x)"]
+transforms_list  = [transf_01]#, transf_02, transf_03, transf_04, transf_05, transf_06]
+transforms_names = ["y(x) → y(x)"]#, "y(x) → 1/y(x)", "y(x) → y(x)/x", "y(x) → x/y(x)", "y(x) → 1/(y(x)x)", "y(x) → 1/(y(x)√x)"]
 
-optim_list  = [NelderMead(), SimulatedAnnealing(), BFGS(), LBFGS(), ConjugateGradient(), GradientDescent(), MomentumGradientDescent(), AcceleratedGradientDescent()]
-optim_names = ["NelderMead", "SimulatedAnnealing", "BFGS", "LBFGS", "ConjugateGradient", "GradientDescent", "MomentumGradientDescent", "AcceleratedGradientDescent"]
+optim_list  = [LBFGS()]
+optim_names = ["LBFGS"]
 opts = Optim.Options(iterations=20000,store_trace = false,
                              show_trace = false,
-                             allow_f_increases = true,
+                             allow_f_increases = false,
                              x_tol = 1e-12,
                              f_tol = 1e-12,
                              show_warnings = true)
 
-dist_list  = [jED.square_dist, jED.abs_dist]
-dist_names = ["|vec|^2", "|vec|"]
+dist_list  = [jED.square_dist]#, jED.abs_dist]
+dist_names = ["|vec|^2"]#, "|vec|"]
 
+println("DBG: ", collect(zip(transforms_names, transforms_list)))
 
 function run_tests(NSites, U, μ_in, β; maxit = 100, verbose=false)
     fits = []
@@ -119,7 +106,6 @@ function run_tests(NSites, U, μ_in, β; maxit = 100, verbose=false)
     for (transf_name, cf) in zip(transforms_names, transforms_list)
         for (opt_name,opt) in zip(optim_names, optim_list)
             for (dist_name, dist_f) in zip(dist_names, dist_list)
-
                 run_name = "$cf  ($dist_name) // opt: $(typeof(opt))"
                 println("running: ", run_name)
                 function fitf(pAIM::AIMParams, μ, GLoc_i, νnGrid)
@@ -149,36 +135,5 @@ function GW_fit_real(νnGrid::Vector, p::Vector)::Vector
     tmp = jED.GWeiss_real(νnGrid, μ, p[1:N], p[(N+1):end])
     return tmp
 end
-names,fits = run_tests(NSites, U, μ, β; maxit = 200, verbose=true)
+names,fits = run_tests(NSites, U, μ, β; maxit = 200, verbose=false)
 
-
-for el in zip(names, fits)
-    println(el[1], ": ", el[2][end])
-end
-
-for el in zip(names, fits)
-    vals = Optim.minimizer(el[2][end])
-    println(rpad("=========== $(el[1]) =========",80,"="))
-    println(vals)
-    println(repeat("=",80))
-end
-for el in zip(names, fits)
-    vals = Optim.minimizer(el[2][end])
-    println(rpad("=========== $(el[1]) =========",80,"="))
-    println("Converged: ", Optim.converged(el[2][end]), " // Minimum (∑Vₗ^2  = $(sum(vals[NSites+1:end] .^ 2)))")
-    println("Solution :    ϵₖ = $(lpad.(round.(vals[1:NSites],digits=4),9)...)")
-    println("              Vₖ = $(lpad.(round.(vals[NSites+1:end],digits=4),9)...)")
-    println(repeat("=",80))
-end
-
-
-println("Results are available in `fits` variable")
-println(to)
-
-jldopen("fit_res_$β.jld2", "w") do f
-    fit_quality = map(x->x[end-1], fits)
-    f["names"] = names
-    f["fits"] = fits
-    f["fit_quality"] = fit_quality
-    f["times"] = to
-end
